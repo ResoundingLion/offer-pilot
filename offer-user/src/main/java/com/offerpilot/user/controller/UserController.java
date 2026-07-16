@@ -1,0 +1,112 @@
+package com.offerpilot.user.controller;
+
+import com.offerpilot.common.result.Result;
+import com.offerpilot.user.dto.UserCreateRequest;
+import com.offerpilot.user.dto.UserUpdateRequest;
+import com.offerpilot.user.entity.User;
+import com.offerpilot.user.service.UserService;
+import com.offerpilot.user.vo.UserVO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    // 查单个用户
+    @GetMapping("/{id}")
+    public Result<UserVO> getUserById(@PathVariable Long id) {
+        User user = userService.findById(id);
+
+        if(user == null) {
+            return Result.notFound();
+        }
+
+        UserVO vo = convertToVO(user);
+
+        return Result.success(vo);
+    }
+
+    // 查所有用户
+    @GetMapping
+    public Result<List<UserVO>> getAllUsers() {
+        List<User> users = userService.findAll();
+
+        List<UserVO> vos = users.stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+        return Result.success(vos);
+    }
+
+    // 创建用户
+    @PostMapping
+    public Result<UserVO> createUser(@Valid @RequestBody UserCreateRequest userCreateRequest) {
+        User user = new User();
+        user.setEmail(userCreateRequest.getEmail());
+        user.setPhone(userCreateRequest.getPhone());
+        user.setName(userCreateRequest.getName());
+        user.setAvatar(userCreateRequest.getAvatar());
+
+        User userCreated = userService.create(user);
+
+        return Result.created(convertToVO(userCreated));
+
+    }
+
+    // 更新用户
+    @PutMapping
+    public Result<UserVO> updateUser(@Valid @RequestBody UserUpdateRequest userUpdateRequest) {
+        User existing = userService.findById(userUpdateRequest.getId());
+        if (existing == null) {
+            return Result.notFound();
+        }
+
+        User user = new User();
+        user.setId(userUpdateRequest.getId());
+        user.setEmail(userUpdateRequest.getEmail());
+        user.setPhone(userUpdateRequest.getPhone());
+        user.setName(userUpdateRequest.getName());
+        user.setAvatar(userUpdateRequest.getAvatar());
+
+        User updated = userService.update(user);
+        return Result.success(convertToVO(updated));
+
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteUser(@PathVariable Long id) {
+        // 先查存不存在
+        User existing = userService.findById(id);
+        if (existing == null) {
+            return Result.notFound();
+        }
+        userService.deleteById(id);
+        return Result.success();
+    }
+
+    private UserVO convertToVO(User user) {
+        UserVO vo = new UserVO();
+        vo.setId(user.getId());
+        vo.setEmail(user.getEmail());
+        vo.setPhone(user.getPhone());
+        vo.setName(user.getName());
+        vo.setAvatar(user.getAvatar());
+        vo.setCreatedAt(user.getCreatedAt());
+        vo.setUpdatedAt(user.getUpdatedAt());
+        return vo;
+    }
+}

@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: offer-user
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: nacos
+        password: nacos
+      config:
+        server-addr: localhost:8848
+        username: nacos
+        password: nacos
+        file-extension: yaml
+  config:
+    import:
+      - optional:nacos:offer-user.yaml
