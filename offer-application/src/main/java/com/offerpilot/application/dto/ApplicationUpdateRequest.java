@@ -1,5 +1,6 @@
 package com.offerpilot.application.dto;
 
+import com.offerpilot.application.enums.ApplicationSource;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -17,7 +18,7 @@ public class ApplicationUpdateRequest {
     @NotNull
     private Long positionId;
 
-    private String source;
+    private ApplicationSource source;
 
     private LocalDateTime appliedAt;
 

@@ -16,4 +16,6 @@ public interface OfferService {
     void deleteById(Long id);
 
     Offer findByApplicationId(Long applicationId);
+
+    Offer updateStatus(Long id, String status);
 }

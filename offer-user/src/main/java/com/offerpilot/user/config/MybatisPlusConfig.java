@@ -1,4 +1,4 @@
-package com.offerpilot.auth.config;
+package com.offerpilot.user.config;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.offerpilot.common.config.OfferPilotMetaObjectHandler;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * 所有模块统一用此方式，不使用 @Component 扫描。
  */
 @Configuration
-public class MyBatisPlusConfig {
+public class MybatisPlusConfig {
 
     @Bean
     public MetaObjectHandler metaObjectHandler() {
