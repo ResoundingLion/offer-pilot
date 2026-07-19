@@ -11,6 +11,9 @@ OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪
 - 🔐 **统一认证** — JWT 令牌 + Spring Security + 网关全局鉴权
 - 🔄 **状态机驱动** — 投递全生命周期（SAVED → APPLIED → ... → OFFER/REJECTED）含非法流转校验
 - 🌐 **OpenFeign 跨服务调用** — Application 服务跨服务查询 Company/Position 信息
+- 🎯 **Pipeline 投递进度流水线** — Dashboard 可视化阶段灯，一眼看清全部投递状态
+- 🚀 **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
+- 🎨 **深色科技风 UI** — 粒子登录页、赛博卡片、扫描线、页面转场动画
 - 📦 **Docker 容器化** — MySQL/Redis/Nacos 一键部署
 
 ## 🛠️ 技术栈
@@ -59,7 +62,7 @@ Client (浏览器 / Postman)
 | **offer-gateway** | 网关服务：路由转发、统一 JWT 鉴权、跨域配置 | — |
 | **offer-auth** | 认证服务：注册、登录、JWT 签发 | 2 |
 | **offer-user** | 用户/公司/岗位 CRUD | 15 |
-| **offer-application** | 投递/面试/Offer 全流程管理（含状态机） | 14 |
+| **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 | 16 |
 | **offer-common** | 公共模块：统一响应、异常处理、自动填充 | — |
 | **offer-api** | Feign 接口定义（跨服务通信契约） | — |
 
@@ -142,8 +145,9 @@ GET /api/applications → 返回：
 | Sprint 1 | 脚手架搭建 + 核心业务 CRUD | ✅ 完成 |
 | Sprint 2 | 投递状态机 + 面试/Offer 管理 | ✅ 完成 |
 | Sprint 3 | 跨服务 Feign 调用 | ✅ 完成 |
-| Sprint 4 | Dashboard 统计 + Knife4j 文档 | ⬜ 待开始 |
-| Sprint 5 | Docker 容器化部署 + CI/CD | ⬜ 待开始 |
+| Sprint 4 | UI 赛博改造 + Pipeline 流水线 + 一键推进 | ✅ 完成 |
+| Sprint 5 | 单元测试 + GitHub Actions CI | ⬜ 待开始 |
+| Sprint 6 | Docker 容器化部署 + CI/CD | ⬜ 待开始 |
 
 ## 📚 文档索引
 

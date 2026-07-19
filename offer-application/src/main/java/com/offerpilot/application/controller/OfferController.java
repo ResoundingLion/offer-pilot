@@ -31,8 +31,9 @@ public class OfferController {
     @GetMapping("/api/applications/{appId}/offers")
     public Result<OfferVO> getOfferByApplicationId(@PathVariable Long appId) {
         Offer offer = offerService.findByApplicationId(appId);
+        // 没有 Offer 时返回 null data 而非 404，避免前端弹"资源不存在"错误
         if (offer == null) {
-            return Result.notFound();
+            return Result.success((OfferVO) null);
         }
         return Result.success(OfferConverter.convertToVO(offer));
     }

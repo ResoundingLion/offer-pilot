@@ -18,6 +18,8 @@ public class ApplicationConverter {
         vo.setSource(application.getSource());
         vo.setAppliedAt(application.getAppliedAt());
         vo.setNotes(application.getNotes());
+        vo.setPipelineConfig(application.getPipelineConfig());
+        vo.setCurrentStage(application.getCurrentStage());
         vo.setCreatedAt(application.getCreatedAt());
         vo.setUpdatedAt(application.getUpdatedAt());
         return vo;
@@ -31,6 +33,7 @@ public class ApplicationConverter {
         application.setSource(request.getSource());
         application.setAppliedAt(request.getAppliedAt());
         application.setNotes(request.getNotes());
+        application.setPipelineConfig(request.getPipelineConfig());
         // 新增投递默认状态为 SAVED
         application.setStatus(ApplicationStatus.SAVED);
         return application;
@@ -44,6 +47,7 @@ public class ApplicationConverter {
         application.setSource(request.getSource());
         application.setAppliedAt(request.getAppliedAt());
         application.setNotes(request.getNotes());
+        application.setPipelineConfig(request.getPipelineConfig());
         // status 不更新——状态变更走专门的 PATCH 接口
         return application;
     }

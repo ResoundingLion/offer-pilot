@@ -4,6 +4,59 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0-SNAPSHOT] — 2026-07-19
+
+### 🎨 深色科技风 UI 增强
+
+- **全局扫描线叠加**：固定层青色线性扫描，增强赛博氛围
+- **页面转场动画**：Vue `<Transition name="page-fade">` — 进入时模糊+位移，退出时淡出
+- **粒子登录页**：30 颗浮动发光粒子 + 呼吸网格 + 光晕脉冲 + 按钮扫光
+- **输入框暗色调**：从白色底改为青色暗底 `rgba(0,212,255,0.02)`，青色发光光标 + hover 光晕
+- **分页箭头赛博化**：hover 放大 + 辉光 + 激活态青色边框
+- **卡片顶部描边**：hover 时顶部渐变辉光出现
+- **弹窗动画**：scale + translateY 入场，遮罩模糊
+- **NProgress 赛博条**：青紫渐变 + 发光
+
+### 🐛 修复
+
+- **`<Transition>` 多根节点 Bug**：`application/index.vue` 模板 3 个平级根节点导致路由切换卡死，统一包一层 `<div>`
+- **表单描述列表白色背景**：Element Plus `el-descriptions` 白色底色改为暗色透明
+
+### 🏗️ Pipeline 投递进度流水线
+
+- **数据库新增**：`application` 表 `pipeline_config` + `current_stage` 字段
+- **后端**：
+  - `PipelineVO.java` — 流水线 VO（applicationId + stages 阶段灯列表）
+  - `DashboardController` 新增 `GET /api/applications/dashboard/pipeline`
+  - 推导算法：优先用 `currentStage` 定位阶段，兼容旧数据反推
+  - 5 种灯状态：COMPLETED/ACTIVE/PENDING/FAILED/WITHDRAWN
+- **前端**：
+  - Dashboard 统计卡片与图表之间插入 Pipeline 流水线区域
+  - 水平阶段灯条：🟢 ✅ / 🔵 ◉ / ⚪ / 🔴 ✕ / ⚫ ✕
+  - 悬浮 tooltip 显示阶段状态，点击跳投递详情
+
+### 🚀 一键推进
+
+- **后端**：
+  - `AdvanceRequest.java` — 推进 DTO（targetStage + 面试字段 + Offer 字段）
+  - `ApplicationController` 新增 `PATCH /{id}/advance`
+  - 一个请求同时处理：状态变更 + 面试/Offer 记录创建
+  - 子阶段推进（ASSESSMENT→EXAM）：`current_stage` 精确记录，同状态内也更新时间戳
+  - Offer 占位：不填薪资只记 `current_stage`，不改 `application.status`
+  - 补结果逻辑：推进到已有面试记录的轮次 → 更新面试而非新建
+- **前端**：
+  - 每条 Pipeline 记录右侧「推进→」按钮（青紫渐变 + 辉光）
+  - 动态弹窗：面试轮次显示面试表单，Offer 显示薪资表单，简单阶段显示确认
+  - 青色阶段再点推进 → 弹出编辑框补结果
+  - 提交后 Dashboard 自动刷新 Pipeline
+
+### 📝 新投递流程配置
+
+- 新增/编辑投递弹窗新增「流程配置」区域，可勾选：测评/笔试/二面/三面/四面
+- 实时流程预览（固定阶段青色 + 可选阶段灰色）
+
+---
+
 ## [1.0.0-SNAPSHOT] — 2026-07-19
 
 ### 新增

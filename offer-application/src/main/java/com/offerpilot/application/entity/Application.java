@@ -56,6 +56,20 @@ public class Application {
      */
     private String notes;
 
+    /**
+     * 可选阶段配置，逗号分隔
+     * 如 "ASSESSMENT,EXAM,INTERVIEW_3,INTERVIEW_4"
+     * null 表示旧数据，需要反推
+     */
+    private String pipelineConfig;
+
+    /**
+     * 当前流水线阶段 key
+     * 如：APPLIED / ASSESSMENT / EXAM / INTERVIEW_1 / INTERVIEW_2 / HR_INTERVIEW / OFFER
+     * null 表示旧数据，由状态反推
+     */
+    private String currentStage;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

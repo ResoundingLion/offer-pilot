@@ -1,5 +1,6 @@
 package com.offerpilot.application.dto;
 
+import com.offerpilot.application.enums.InterviewResult;
 import com.offerpilot.application.enums.InterviewRound;
 import com.offerpilot.application.enums.InterviewType;
 import jakarta.validation.constraints.NotNull;
@@ -29,4 +30,6 @@ public class InterviewUpdateRequest {
     private String interviewer;
 
     private String feedback;
+
+    private InterviewResult result;
 }

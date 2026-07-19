@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,8 +48,14 @@ public class CompanyController {
     }
 
     @PostMapping
-    public Result<CompanyVO> createCompany(@Valid @RequestBody CompanyCreateRequest request) {
+    public Result<CompanyVO> createCompany(
+            @Valid @RequestBody CompanyCreateRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         Company company = CompanyConverter.convertToEntity(request);
+        // userId 优先从网关注入的请求头取（前端不传 userId）
+        if (userId != null) {
+            company.setUserId(userId);
+        }
         Company created = companyService.create(company);
         return Result.created(CompanyConverter.convertToVO(created));
     }

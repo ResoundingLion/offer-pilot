@@ -18,6 +18,8 @@ public class ApplicationVO {
     private ApplicationSource source;
     private LocalDateTime appliedAt;
     private String notes;
+    private String pipelineConfig;
+    private String currentStage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

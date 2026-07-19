@@ -97,6 +97,8 @@
 | source | VARCHAR(20) | | 投递渠道 |
 | applied_at | DATETIME | | 投递日期 |
 | notes | TEXT | | 备注 |
+| pipeline_config | VARCHAR(100) | | 可选阶段配置: ASSESSMENT,EXAM,INTERVIEW_2,INTERVIEW_3,INTERVIEW_4 |
+| current_stage | VARCHAR(50) | | 当前流水线阶段: APPLIED/ASSESSMENT/EXAM/INTERVIEW_1/…/OFFER |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 

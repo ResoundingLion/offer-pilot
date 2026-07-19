@@ -1,6 +1,7 @@
 package com.offerpilot.application.controller;
 
 import com.offerpilot.application.converter.ApplicationConverter;
+import com.offerpilot.application.dto.AdvanceRequest;
 import com.offerpilot.application.dto.ApplicationCreateRequest;
 import com.offerpilot.application.dto.ApplicationUpdateRequest;
 import com.offerpilot.application.dto.StatusUpdateRequest;
@@ -121,6 +122,20 @@ public class ApplicationController {
             return Result.notFound();
         }
         return Result.success(applicationService.enrichVO(updated));
+    }
+
+    /**
+     * PATCH /api/applications/{id}/advance —— 一键推进
+     */
+    @PatchMapping("/{id}/advance")
+    public Result<ApplicationVO> advanceApplication(
+            @PathVariable Long id,
+            @RequestBody AdvanceRequest request) {
+        ApplicationVO vo = applicationService.advance(id, request);
+        if (vo == null) {
+            return Result.notFound();
+        }
+        return Result.success(vo);
     }
 
     // ====== 删除 ======

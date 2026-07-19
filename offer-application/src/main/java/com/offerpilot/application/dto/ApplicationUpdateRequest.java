@@ -23,4 +23,10 @@ public class ApplicationUpdateRequest {
     private LocalDateTime appliedAt;
 
     private String notes;
+
+    /**
+     * 可选阶段配置 —— 逗号分隔
+     * 如 "ASSESSMENT,EXAM,INTERVIEW_3"
+     */
+    private String pipelineConfig;
 }

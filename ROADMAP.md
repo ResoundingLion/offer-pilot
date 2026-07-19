@@ -5,82 +5,66 @@
 目标：秋招前交付可演示的 MVP。
 
 ```
-第1周 ──── 第2周 ──── 第3周 ──── 第4周 ──── 第5周 ──── 第6周 ──── 第7周 ──── 第8周
-│          │          │          │          │          │          │          │
-├─ Sprint 1 ─┤  ├─ Sprint 2 ─┤  ├─ Sprint 3 ─┤  ├─ Sprint 4 ─┤  ├─ Sprint 5 +
-  脚手架搭建    用户+公司模块     岗位 + 投递     面试+Offer      Dashboard+
-               CRUD             状态流转                         联调部署
+第1周 ──── 第2周 ──── 第3周 ──── 第4周 ──── 第5周 ──── 第6周 ──── 第7周
+│          │          │          │          │          │          │
+├─ Sprint 1 ─┤  ├─ Sprint 2 ─┤  ├─ Sprint 3 ─┤  ├─ Sprint 4 ─┤  ├─ Sprint 5
+  脚手架搭建    用户+公司+      投递+面试+     前端全栈+     单元测试+
+                岗位 CRUD      Offer 管理      Pipeline+      CI/CD
+                                              一键推进
 ```
 
 ---
 
-## Sprint 1（7月第3-4周）—— 脚手架与基础设施 ✅ 当前
+## Sprint 1（完成）—— 脚手架与基础设施
 
-**目标：** Maven 父工程 + 4 个基础模块创建 + 本地环境跑通。
-
-| 任务 | 说明 |
-|------|------|
-| 1.1 父工程 | `offer-pilot` 聚合模块，锁定所有版本依赖 |
-| 1.2 offer-common | `Result<T>` 统一响应、全局异常、常量、工具类 |
-| 1.3 Nacos 环境 | Docker Compose 启动 Nacos + MySQL + Redis |
-| 1.4 offer-gateway | 路由配置 + 跨域 + 健康检查 |
-| 1.5 offer-auth | 登录/注册 + JWT 签发 |
-| 1.6 链路验证 | 跑通 Gateway → Auth 认证链路 |
+- ✅ 父 POM（Spring Boot 3.2.12 + Spring Cloud Alibaba 2023.0.3.4）
+- ✅ Docker Compose：MySQL/Redis/Nacos
+- ✅ Nacos 配置中心 + SQL 建表脚本
+- ✅ offer-common：Result、异常处理、自动填充
+- ✅ offer-gateway：路由 + 跨域 + JWT 全局过滤器
+- ✅ offer-auth：注册/登录 + JWT 签发
 
 ---
 
-## Sprint 2（7月第4周 - 8月第1周）—— 用户 + 公司 + 岗位
+## Sprint 2（完成）—— 用户 + 公司 + 岗位
 
-**目标：** 用户管理+公司管理+岗位管理 CRUD，基础数据维护功能可用。
-
-| 任务 | 说明 |
-|------|------|
-| 2.1 offer-user 基础 | 包结构、MyBatis-Plus 配置 |
-| 2.2 用户接口 | 注册、信息查询与更新 |
-| 2.3 公司 CRUD | 公司增删改查 |
-| 2.4 岗位 CRUD | 岗位增删改查，按公司/城市/类型筛选 |
-| 2.5 单元测试 | 主要接口单测 |
+- ✅ User CRUD（5 接口）
+- ✅ Company CRUD（5 接口）
+- ✅ Position CRUD（5 接口）
+- ✅ 内部接口：Feign 跨服务调用支持
 
 ---
 
-## Sprint 3（8月第1-3周）—— 投递管理与状态流转
+## Sprint 3（完成）—— 投递 + 面试 + Offer
 
-**目标：** 核心功能——投递创建、状态流转、数据校验。
-
-| 任务 | 说明 |
-|------|------|
-| 3.1 offer-application 基础 | 包结构、MyBatis-Plus 配置 |
-| 3.2 投递 CRUD | 投递增删改查 |
-| 3.3 状态流转 | PATCH 状态接口 + 流转校验 |
-| 3.4 跨服务调用 | OpenFeign 调用 offer-user 获取岗位信息 |
-| 3.5 集成测试 | 投递全流程测试 |
+- ✅ 6 枚举 + 3 Entity + 3 Mapper + 3 Service
+- ✅ Application 6 接口（含状态机）
+- ✅ Interview 4 接口 + Offer 4 接口
+- ✅ Dashboard 统计接口
+- ✅ Feign 跨服务调用（companyName/positionTitle）
 
 ---
 
-## Sprint 4（8月第3-4周）—— 面试 + Offer
+## Sprint 4（完成）—— 前端全栈 + Pipeline 流水线
 
-**目标：** 面试记录、Offer 管理，投递-面试-Offer 完整链路。
-
-| 任务 | 说明 |
-|------|------|
-| 4.1 面试 CRUD | 面试增删改查，嵌套于投递 |
-| 4.2 Offer CRUD | Offer 创建、接受/拒绝 |
-| 4.3 校验逻辑 | 状态流转约束（如：有面试才能发 Offer） |
-| 4.4 集成测试 | 全流程链路 |
+- ✅ Vue 3 七页前端全部完成
+- ✅ 深色科技风 UI（扫描线、粒子登录、赛博卡片、页面转场）
+- ✅ Pipeline 投递进度流水线（5 态阶段灯）
+- ✅ 一键推进（动态弹窗 + 面试/Offer 一次创建）
+- ✅ 流程配置（新增投递可选测评/笔试/多轮面试）
+- ✅ Offer 占位（不填薪资不改状态）
 
 ---
 
-## Sprint 5（9月第1-2周）—— Dashboard + 联调部署
-
-**目标：** 数据统计 + 出一份可展示的版本。
+## Sprint 5（待开始）—— 单元测试 + CI/CD
 
 | 任务 | 说明 |
 |------|------|
-| 5.1 统计接口 | 投递数/面试率/Offer 率 |
-| 5.2 Knife4j 配置 | API 文档自动生成 |
-| 5.3 Docker Compose 整合 | 所有服务容器化一键启动 |
-| 5.4 数据预填充 | 演示用示例数据 SQL |
-| 5.5 最终验收 | 端到端流程检查 |
+| 5.1 Service 层测试 | Mock Mapper + Mock Feign |
+| 5.2 Controller 层测试 | MockMVC |
+| 5.3 状态机流转测试 | 合法/非法路径全覆盖 |
+| 5.4 GitHub Actions CI | push 自动编译 + 跑测试 |
+| 5.5 JaCoCo 覆盖率 | 报告 + README badge |
 
 ---
 
@@ -88,36 +72,9 @@
 
 | 模块 | 说明 |
 |------|------|
-| Interview Hub | 面试提醒、日历 |
-| Resume Center | 多版本简历、附件上传 |
-| Notification | 邮件通知 + WebSocket |
-| Analytics | 渠道分析、通过率趋势 |
-| AI | JD 分析、简历优化、面试题 |
-
----
-
-## 当前进度
-
-- [x] Sprint 1 脚手架
-- [x] Sprint 2 用户/公司/岗位
-- [x] Sprint 3 投递/状态流转
-- [x] Sprint 4 面试/Offer
-- [ ] Sprint 5 Dashboard + 联调部署
-
-> Sprint 1~4 已经在一轮开发中连续完成（7月第3~4周），各模块均已编译测试通过。
-> 详见 `project-progress` 记忆文件。
-
-### 下一步做什么
-
-Sprint 5 之前还有一步关键的**跨服务调用（Feign）**需要先做——目前各服务是孤岛，offer-application 查不到 offer-user 里的公司名。
-
-所以优先级是：
-
-1. **offer-api Feign 接口** — 服务间通信
-2. **Git 提交 + v0.1 标签**
-3. **README.md / CHANGELOG.md**
-4. Sprint 5 — Dashboard + 部署
-
-### 要点说明
-
-排期按 4 个服务（而非 10 个）排的，每轮 Sprint 正好做一个独立可演示的模块。Sprint 5 结束时 Git 打 v1.0 标签，这就是你秋招可以展示的版本。后面 AI 功能是加分项不是必选项，不用焦虑。
+| Redis 缓存 | 缓存 Feign 结果、Cache-Aside、防雪崩穿透 |
+| Sentinel 熔断 | Feign 降级 + 限流 |
+| Docker 容器化 | 4 个服务打镜像 + 一键启动 |
+| Knife4j | API 文档自动生成 |
+| Arthas 调优 | 慢查询定位 + 修复 |
+| 其他 | 面试提醒、简历管理、AI 分析 |

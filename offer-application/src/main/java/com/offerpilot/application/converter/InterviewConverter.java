@@ -48,6 +48,7 @@ public class InterviewConverter {
         interview.setInterviewer(request.getInterviewer());
         interview.setLocation(request.getLocation());
         interview.setFeedback(request.getFeedback());
+        interview.setResult(request.getResult());
         return interview;
     }
 }
