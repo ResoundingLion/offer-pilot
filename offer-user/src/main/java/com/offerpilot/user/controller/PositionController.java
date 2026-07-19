@@ -1,6 +1,7 @@
 package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
+import com.offerpilot.user.converter.PositionConverter;
 import com.offerpilot.user.dto.PositionCreateRequest;
 import com.offerpilot.user.dto.PositionUpdateRequest;
 import com.offerpilot.user.entity.Position;
@@ -33,34 +34,23 @@ public class PositionController {
         if (position == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(position));
+        return Result.success(PositionConverter.convertToVO(position));
     }
 
     @GetMapping
     public Result<List<PositionVO>> getAllPositions() {
         List<Position> positions = positionService.findAll();
         List<PositionVO> vos = positions.stream()
-                .map(this::convertToVO)
+                .map(PositionConverter::convertToVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
 
     @PostMapping
     public Result<PositionVO> createPosition(@Valid @RequestBody PositionCreateRequest request) {
-        Position position = new Position();
-        position.setCompanyId(request.getCompanyId());
-        position.setTitle(request.getTitle());
-        position.setSalaryMin(request.getSalaryMin());
-        position.setSalaryMax(request.getSalaryMax());
-        position.setCity(request.getCity());
-        position.setEducation(request.getEducation());
-        position.setExperience(request.getExperience());
-        position.setEmploymentType(request.getEmploymentType());
-        position.setDescription(request.getDescription());
-        position.setDeadline(request.getDeadline());
-
+        Position position = PositionConverter.convertToEntity(request);
         Position created = positionService.create(position);
-        return Result.created(convertToVO(created));
+        return Result.created(PositionConverter.convertToVO(created));
     }
 
     @PutMapping
@@ -70,21 +60,9 @@ public class PositionController {
             return Result.notFound();
         }
 
-        Position position = new Position();
-        position.setId(request.getId());
-        position.setCompanyId(request.getCompanyId());
-        position.setTitle(request.getTitle());
-        position.setSalaryMin(request.getSalaryMin());
-        position.setSalaryMax(request.getSalaryMax());
-        position.setCity(request.getCity());
-        position.setEducation(request.getEducation());
-        position.setExperience(request.getExperience());
-        position.setEmploymentType(request.getEmploymentType());
-        position.setDescription(request.getDescription());
-        position.setDeadline(request.getDeadline());
-
+        Position position = PositionConverter.convertToEntity(request);
         Position updated = positionService.update(position);
-        return Result.success(convertToVO(updated));
+        return Result.success(PositionConverter.convertToVO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -97,22 +75,4 @@ public class PositionController {
         return Result.success();
     }
 
-    private PositionVO convertToVO(Position position) {
-        PositionVO vo = new PositionVO();
-        vo.setId(position.getId());
-        vo.setCompanyId(position.getCompanyId());
-        vo.setTitle(position.getTitle());
-        vo.setSalaryMin(position.getSalaryMin());
-        vo.setSalaryMax(position.getSalaryMax());
-        vo.setCity(position.getCity());
-        vo.setEducation(position.getEducation());
-        vo.setExperience(position.getExperience());
-        vo.setEmploymentType(position.getEmploymentType());
-        vo.setDescription(position.getDescription());
-        vo.setStatus(position.getStatus());
-        vo.setDeadline(position.getDeadline());
-        vo.setCreatedAt(position.getCreatedAt());
-        vo.setUpdatedAt(position.getUpdatedAt());
-        return vo;
-    }
 }

@@ -1,10 +1,10 @@
 package com.offerpilot.application.controller;
 
+import com.offerpilot.application.converter.ApplicationConverter;
 import com.offerpilot.application.dto.ApplicationCreateRequest;
 import com.offerpilot.application.dto.ApplicationUpdateRequest;
 import com.offerpilot.application.dto.StatusUpdateRequest;
 import com.offerpilot.application.entity.Application;
-import com.offerpilot.application.enums.ApplicationStatus;
 import com.offerpilot.application.service.ApplicationService;
 import com.offerpilot.application.vo.ApplicationVO;
 import com.offerpilot.common.result.Result;
@@ -40,7 +40,7 @@ public class ApplicationController {
     public Result<List<ApplicationVO>> getAllApplications() {
         List<Application> applications = applicationService.findAll();
         List<ApplicationVO> vos = applications.stream()
-                .map(this::convertToVO)
+                .map(ApplicationConverter::convertToVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
@@ -54,7 +54,7 @@ public class ApplicationController {
         if (application == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(application));
+        return Result.success(ApplicationConverter.convertToVO(application));
     }
 
     // ====== 写操作 ======
@@ -69,18 +69,10 @@ public class ApplicationController {
      */
     @PostMapping
     public Result<ApplicationVO> createApplication(@Valid @RequestBody ApplicationCreateRequest request) {
-        Application application = new Application();
-        application.setUserId(request.getUserId());
-        application.setCompanyId(request.getCompanyId());
-        application.setPositionId(request.getPositionId());
-        application.setSource(request.getSource());
-        application.setAppliedAt(request.getAppliedAt());
-        application.setNotes(request.getNotes());
-        // status 默认投递为 SAVED（收藏/待投递），后续通过 PATCH 状态流转变更
-        application.setStatus(ApplicationStatus.SAVED);
+        Application application = ApplicationConverter.convertToEntity(request);
 
         Application created = applicationService.create(application);
-        return Result.created(convertToVO(created));
+        return Result.created(ApplicationConverter.convertToVO(created));
     }
 
     /**
@@ -101,20 +93,11 @@ public class ApplicationController {
             return Result.notFound();
         }
 
-        Application application = new Application();
-        application.setId(request.getId());
-        application.setCompanyId(request.getCompanyId());
-        application.setPositionId(request.getPositionId());
-        application.setSource(request.getSource());
-        application.setAppliedAt(request.getAppliedAt());
-        application.setNotes(request.getNotes());
-        // status 不更新——状态变更走专门的 PATCH 接口
+        Application application = ApplicationConverter.convertToEntity(request);
 
         Application updated = applicationService.update(application);
-        return Result.success(convertToVO(updated));
+        return Result.success(ApplicationConverter.convertToVO(updated));
     }
-
-    // ====== 状态流转 ======
 
     /**
      * PATCH /api/applications/{id}/status —— 状态流转
@@ -137,7 +120,7 @@ public class ApplicationController {
         if (updated == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(updated));
+        return Result.success(ApplicationConverter.convertToVO(updated));
     }
 
     // ====== 删除 ======
@@ -155,30 +138,4 @@ public class ApplicationController {
         return Result.success();
     }
 
-    // ====== 转换方法 ======
-
-    /**
-     * Entity → VO 转换
-     *
-     * 为什么需要这个方法？
-     *   不能直接把 Entity 返回给前端，因为：
-     *   1. Entity 可能包含敏感字段（虽然目前没有）
-     *   2. Entity 可能关联了懒加载的对象（序列化会报错）
-     *   3. VO 可以自由组合字段，不一定要和 Entity 一一对应
-     *      （比如后面 ApplicationVO 可以冗余显示 companyName 和 positionTitle）
-     */
-    private ApplicationVO convertToVO(Application application) {
-        ApplicationVO vo = new ApplicationVO();
-        vo.setId(application.getId());
-        vo.setUserId(application.getUserId());
-        vo.setCompanyId(application.getCompanyId());
-        vo.setPositionId(application.getPositionId());
-        vo.setStatus(application.getStatus());
-        vo.setSource(application.getSource());
-        vo.setAppliedAt(application.getAppliedAt());
-        vo.setNotes(application.getNotes());
-        vo.setCreatedAt(application.getCreatedAt());
-        vo.setUpdatedAt(application.getUpdatedAt());
-        return vo;
-    }
 }

@@ -1,6 +1,7 @@
 package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
+import com.offerpilot.user.converter.UserConverter;
 import com.offerpilot.user.dto.UserCreateRequest;
 import com.offerpilot.user.dto.UserUpdateRequest;
 import com.offerpilot.user.entity.User;
@@ -36,9 +37,7 @@ public class UserController {
             return Result.notFound();
         }
 
-        UserVO vo = convertToVO(user);
-
-        return Result.success(vo);
+        return Result.success(UserConverter.convertToVO(user));
     }
 
     // 查所有用户
@@ -47,7 +46,7 @@ public class UserController {
         List<User> users = userService.findAll();
 
         List<UserVO> vos = users.stream()
-                .map(this::convertToVO)
+                .map(UserConverter::convertToVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
@@ -55,16 +54,9 @@ public class UserController {
     // 创建用户
     @PostMapping
     public Result<UserVO> createUser(@Valid @RequestBody UserCreateRequest userCreateRequest) {
-        User user = new User();
-        user.setEmail(userCreateRequest.getEmail());
-        user.setPhone(userCreateRequest.getPhone());
-        user.setName(userCreateRequest.getName());
-        user.setAvatar(userCreateRequest.getAvatar());
-
+        User user = UserConverter.convertToEntity(userCreateRequest);
         User userCreated = userService.create(user);
-
-        return Result.created(convertToVO(userCreated));
-
+        return Result.created(UserConverter.convertToVO(userCreated));
     }
 
     // 更新用户
@@ -75,16 +67,9 @@ public class UserController {
             return Result.notFound();
         }
 
-        User user = new User();
-        user.setId(userUpdateRequest.getId());
-        user.setEmail(userUpdateRequest.getEmail());
-        user.setPhone(userUpdateRequest.getPhone());
-        user.setName(userUpdateRequest.getName());
-        user.setAvatar(userUpdateRequest.getAvatar());
-
+        User user = UserConverter.convertToEntity(userUpdateRequest);
         User updated = userService.update(user);
-        return Result.success(convertToVO(updated));
-
+        return Result.success(UserConverter.convertToVO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -98,15 +83,4 @@ public class UserController {
         return Result.success();
     }
 
-    private UserVO convertToVO(User user) {
-        UserVO vo = new UserVO();
-        vo.setId(user.getId());
-        vo.setEmail(user.getEmail());
-        vo.setPhone(user.getPhone());
-        vo.setName(user.getName());
-        vo.setAvatar(user.getAvatar());
-        vo.setCreatedAt(user.getCreatedAt());
-        vo.setUpdatedAt(user.getUpdatedAt());
-        return vo;
-    }
 }

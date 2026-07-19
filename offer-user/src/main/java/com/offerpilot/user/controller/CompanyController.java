@@ -1,6 +1,7 @@
 package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
+import com.offerpilot.user.converter.CompanyConverter;
 import com.offerpilot.user.dto.CompanyCreateRequest;
 import com.offerpilot.user.dto.CompanyUpdateRequest;
 import com.offerpilot.user.entity.Company;
@@ -33,31 +34,23 @@ public class CompanyController {
         if (company == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(company));
+        return Result.success(CompanyConverter.convertToVO(company));
     }
 
     @GetMapping
     public Result<List<CompanyVO>> getAllCompanies() {
         List<Company> companies = companyService.findAll();
         List<CompanyVO> vos = companies.stream()
-                .map(this::convertToVO)
+                .map(CompanyConverter::convertToVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
 
     @PostMapping
     public Result<CompanyVO> createCompany(@Valid @RequestBody CompanyCreateRequest request) {
-        Company company = new Company();
-        company.setUserId(request.getUserId());
-        company.setName(request.getName());
-        company.setIndustry(request.getIndustry());
-        company.setWebsite(request.getWebsite());
-        company.setLocation(request.getLocation());
-        company.setSize(request.getSize());
-        company.setDescription(request.getDescription());
-
+        Company company = CompanyConverter.convertToEntity(request);
         Company created = companyService.create(company);
-        return Result.created(convertToVO(created));
+        return Result.created(CompanyConverter.convertToVO(created));
     }
 
     @PutMapping
@@ -67,18 +60,9 @@ public class CompanyController {
             return Result.notFound();
         }
 
-        Company company = new Company();
-        company.setId(request.getId());
-        company.setUserId(request.getUserId());
-        company.setName(request.getName());
-        company.setIndustry(request.getIndustry());
-        company.setWebsite(request.getWebsite());
-        company.setLocation(request.getLocation());
-        company.setSize(request.getSize());
-        company.setDescription(request.getDescription());
-
+        Company company = CompanyConverter.convertToEntity(request);
         Company updated = companyService.update(company);
-        return Result.success(convertToVO(updated));
+        return Result.success(CompanyConverter.convertToVO(updated));
     }
 
     @DeleteMapping("/{id}")
@@ -91,18 +75,4 @@ public class CompanyController {
         return Result.success();
     }
 
-    private CompanyVO convertToVO(Company company) {
-        CompanyVO vo = new CompanyVO();
-        vo.setId(company.getId());
-        vo.setUserId(company.getUserId());
-        vo.setName(company.getName());
-        vo.setIndustry(company.getIndustry());
-        vo.setWebsite(company.getWebsite());
-        vo.setLocation(company.getLocation());
-        vo.setSize(company.getSize());
-        vo.setDescription(company.getDescription());
-        vo.setCreatedAt(company.getCreatedAt());
-        vo.setUpdatedAt(company.getUpdatedAt());
-        return vo;
-    }
 }

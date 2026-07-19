@@ -1,6 +1,7 @@
 package com.offerpilot.application.controller;
 
 
+import com.offerpilot.application.converter.InterviewConverter;
 import com.offerpilot.application.dto.InterviewCreateRequest;
 import com.offerpilot.application.dto.InterviewUpdateRequest;
 import com.offerpilot.application.entity.Interview;
@@ -35,7 +36,7 @@ public class InterviewController {
     public Result<List<InterviewVO>> getAllInterviews(@PathVariable Long appId) {
         List<Interview> interviews = interviewService.findByApplicationId(appId);
         List<InterviewVO> vos = interviews.stream()
-                .map(this::convertToVO)
+                .map(InterviewConverter::convertToVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
@@ -47,17 +48,10 @@ public class InterviewController {
      * @return 面试详情
      */
     @PostMapping("/api/applications/{appId}/interviews")
-    public Result<InterviewVO> createInterview(@PathVariable Long appId, @Valid @RequestBody InterviewCreateRequest interviewCreateRequest) {
-        Interview interview = new Interview();
-        interview.setApplicationId(appId);
-        interview.setInterviewType(interviewCreateRequest.getInterviewType());
-        interview.setInterviewer(interviewCreateRequest.getInterviewer());
-        interview.setScheduledAt(interviewCreateRequest.getScheduledAt());
-        interview.setRound(interviewCreateRequest.getRound());
-        interview.setLocation(interviewCreateRequest.getLocation());
+    public Result<InterviewVO> createInterview(@PathVariable Long appId, @Valid @RequestBody InterviewCreateRequest request) {
+        Interview interview = InterviewConverter.convertToEntity(appId, request);
         interviewService.create(interview);
-        return Result.created(convertToVO(interview));
-
+        return Result.created(InterviewConverter.convertToVO(interview));
     }
 
     /**
@@ -67,25 +61,16 @@ public class InterviewController {
      * @return 面试
      */
     @PutMapping("/api/interviews/{id}")
-    public Result<InterviewVO> updateInterview(@PathVariable Long id, @Valid @RequestBody InterviewUpdateRequest interviewUpdateRequest) {
+    public Result<InterviewVO> updateInterview(@PathVariable Long id, @Valid @RequestBody InterviewUpdateRequest request) {
         // 检查存在
         Interview existing = interviewService.findById(id);
         if (existing == null) {
             return Result.notFound();
         }
 
-        Interview interview = new Interview();
-        interview.setId(id);
-        interview.setApplicationId(interviewUpdateRequest.getApplicationId());
-        interview.setRound(interviewUpdateRequest.getRound());
-        interview.setScheduledAt(interviewUpdateRequest.getScheduledAt());
-        interview.setInterviewType(interviewUpdateRequest.getInterviewType());
-        interview.setInterviewer(interviewUpdateRequest.getInterviewer());
-        interview.setLocation(interviewUpdateRequest.getLocation());
-        interview.setFeedback(interviewUpdateRequest.getFeedback());
-
+        Interview interview = InterviewConverter.convertToEntity(request);
         Interview updated = interviewService.update(interview);
-        return Result.success(convertToVO(updated));
+        return Result.success(InterviewConverter.convertToVO(updated));
     }
 
     /**
@@ -101,22 +86,6 @@ public class InterviewController {
         }
         interviewService.deleteById(id);
         return Result.success();
-    }
-
-    private InterviewVO convertToVO(Interview interview) {
-        InterviewVO vo = new InterviewVO();
-        vo.setId(interview.getId());
-        vo.setApplicationId(interview.getApplicationId());
-        vo.setRound(interview.getRound());
-        vo.setScheduledAt(interview.getScheduledAt());
-        vo.setInterviewType(interview.getInterviewType());
-        vo.setLocation(interview.getLocation());
-        vo.setInterviewer(interview.getInterviewer());
-        vo.setResult(interview.getResult());
-        vo.setFeedback(interview.getFeedback());
-        vo.setCreatedAt(interview.getCreatedAt());
-        vo.setUpdatedAt(interview.getUpdatedAt());
-        return vo;
     }
 
 }

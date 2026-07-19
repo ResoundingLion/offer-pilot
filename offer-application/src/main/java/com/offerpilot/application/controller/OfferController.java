@@ -1,10 +1,10 @@
 package com.offerpilot.application.controller;
 
+import com.offerpilot.application.converter.OfferConverter;
 import com.offerpilot.application.dto.OfferCreateRequest;
 import com.offerpilot.application.dto.OfferUpdateRequest;
 import com.offerpilot.application.dto.StatusUpdateRequest;
 import com.offerpilot.application.entity.Offer;
-import com.offerpilot.application.enums.OfferStatus;
 import com.offerpilot.application.service.OfferService;
 import com.offerpilot.application.vo.OfferVO;
 import com.offerpilot.common.result.Result;
@@ -34,7 +34,7 @@ public class OfferController {
         if (offer == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(offer));
+        return Result.success(OfferConverter.convertToVO(offer));
     }
 
     /**
@@ -43,18 +43,9 @@ public class OfferController {
      */
     @PostMapping("/api/applications/{appId}/offers")
     public Result<OfferVO> createOffer(@PathVariable Long appId, @Valid @RequestBody OfferCreateRequest request) {
-        Offer offer = new Offer();
-        offer.setApplicationId(appId);
-        offer.setSalary(request.getSalary());
-        offer.setBonus(request.getBonus());
-        offer.setStock(request.getStock());
-        offer.setBenefits(request.getBenefits());
-        offer.setDeadline(request.getDeadline());
-        offer.setRemark(request.getRemark());
-        offer.setStatus(OfferStatus.PENDING);
-
+        Offer offer = OfferConverter.convertToEntity(appId, request);
         Offer created = offerService.create(offer);
-        return Result.created(convertToVO(created));
+        return Result.created(OfferConverter.convertToVO(created));
     }
 
     /**
@@ -67,18 +58,9 @@ public class OfferController {
             return Result.notFound();
         }
 
-        Offer offer = new Offer();
-        offer.setId(id);
-        offer.setSalary(request.getSalary());
-        offer.setBonus(request.getBonus());
-        offer.setStock(request.getStock());
-        offer.setBenefits(request.getBenefits());
-        offer.setDeadline(request.getDeadline());
-        offer.setRemark(request.getRemark());
-        // status 不更新——状态变更走 PATCH
-
+        Offer offer = OfferConverter.convertToEntity(request);
         Offer updated = offerService.update(offer);
-        return Result.success(convertToVO(updated));
+        return Result.success(OfferConverter.convertToVO(updated));
     }
 
     /**
@@ -91,22 +73,6 @@ public class OfferController {
         if (updated == null) {
             return Result.notFound();
         }
-        return Result.success(convertToVO(updated));
-    }
-
-    private OfferVO convertToVO(Offer offer) {
-        OfferVO vo = new OfferVO();
-        vo.setId(offer.getId());
-        vo.setApplicationId(offer.getApplicationId());
-        vo.setSalary(offer.getSalary());
-        vo.setBonus(offer.getBonus());
-        vo.setStock(offer.getStock());
-        vo.setBenefits(offer.getBenefits());
-        vo.setDeadline(offer.getDeadline());
-        vo.setStatus(offer.getStatus());
-        vo.setRemark(offer.getRemark());
-        vo.setCreatedAt(offer.getCreatedAt());
-        vo.setUpdatedAt(offer.getUpdatedAt());
-        return vo;
+        return Result.success(OfferConverter.convertToVO(updated));
     }
 }

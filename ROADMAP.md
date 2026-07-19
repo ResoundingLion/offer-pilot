@@ -98,13 +98,25 @@
 
 ## 当前进度
 
-- [ ] Sprint 1 脚手架
-- [ ] Sprint 2 用户/公司/岗位
-- [ ] Sprint 3 投递/状态流转
-- [ ] Sprint 4 面试/Offer
-- [ ] Sprint 5 Dashboard/联调
+- [x] Sprint 1 脚手架
+- [x] Sprint 2 用户/公司/岗位
+- [x] Sprint 3 投递/状态流转
+- [x] Sprint 4 面试/Offer
+- [ ] Sprint 5 Dashboard + 联调部署
 
-> **每个 Sprint 开始前更新此文件**，标记完成情况。
+> Sprint 1~4 已经在一轮开发中连续完成（7月第3~4周），各模块均已编译测试通过。
+> 详见 `project-progress` 记忆文件。
+
+### 下一步做什么
+
+Sprint 5 之前还有一步关键的**跨服务调用（Feign）**需要先做——目前各服务是孤岛，offer-application 查不到 offer-user 里的公司名。
+
+所以优先级是：
+
+1. **offer-api Feign 接口** — 服务间通信
+2. **Git 提交 + v0.1 标签**
+3. **README.md / CHANGELOG.md**
+4. Sprint 5 — Dashboard + 部署
 
 ### 要点说明
 
