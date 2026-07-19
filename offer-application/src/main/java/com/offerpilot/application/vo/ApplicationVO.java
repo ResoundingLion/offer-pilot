@@ -11,7 +11,9 @@ public class ApplicationVO {
     private Long id;
     private Long userId;
     private Long companyId;
+    private String companyName;
     private Long positionId;
+    private String positionTitle;
     private ApplicationStatus status;
     private ApplicationSource source;
     private LocalDateTime appliedAt;

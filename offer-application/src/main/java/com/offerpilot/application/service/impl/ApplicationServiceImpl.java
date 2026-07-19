@@ -1,10 +1,16 @@
 package com.offerpilot.application.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.offerpilot.api.client.CompanyClient;
+import com.offerpilot.api.client.PositionClient;
+import com.offerpilot.api.dto.CompanyDTO;
+import com.offerpilot.api.dto.PositionDTO;
+import com.offerpilot.application.converter.ApplicationConverter;
 import com.offerpilot.application.entity.Application;
 import com.offerpilot.application.enums.ApplicationStatus;
 import com.offerpilot.application.mapper.ApplicationMapper;
 import com.offerpilot.application.service.ApplicationService;
+import com.offerpilot.application.vo.ApplicationVO;
 import com.offerpilot.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +26,9 @@ import java.util.Set;
 public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationMapper applicationMapper;
+    private final CompanyClient companyClient;
+    private final PositionClient positionClient;
+
     @Override
     public Application findById(Long id) {
         return applicationMapper.selectById(id);
@@ -91,6 +100,38 @@ public class ApplicationServiceImpl implements ApplicationService {
         return application;
     }
 
+
+    // ===== 跨服务组装 =====
+
+    @Override
+    public ApplicationVO enrichVO(Application application) {
+        if (application == null) {
+            return null;
+        }
+        ApplicationVO vo = ApplicationConverter.convertToVO(application);
+
+        // 跨服务查询公司名
+        try {
+            CompanyDTO company = companyClient.getCompanyById(application.getCompanyId());
+            if (company != null) {
+                vo.setCompanyName(company.getName());
+            }
+        } catch (Exception e) {
+            // Feign 调用失败时，companyName 保持 null，不影响主流程
+        }
+
+        // 跨服务查询岗位名
+        try {
+            PositionDTO position = positionClient.getPositionById(application.getPositionId());
+            if (position != null) {
+                vo.setPositionTitle(position.getTitle());
+            }
+        } catch (Exception e) {
+            // Feign 调用失败时，positionTitle 保持 null
+        }
+
+        return vo;
+    }
 
     // 当前状态 → 允许跳转到的状态集合
     private static final Map<ApplicationStatus, Set<ApplicationStatus>>

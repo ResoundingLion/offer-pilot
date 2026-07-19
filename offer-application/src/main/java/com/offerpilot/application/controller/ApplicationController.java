@@ -40,7 +40,7 @@ public class ApplicationController {
     public Result<List<ApplicationVO>> getAllApplications() {
         List<Application> applications = applicationService.findAll();
         List<ApplicationVO> vos = applications.stream()
-                .map(ApplicationConverter::convertToVO)
+                .map(applicationService::enrichVO)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
@@ -54,7 +54,7 @@ public class ApplicationController {
         if (application == null) {
             return Result.notFound();
         }
-        return Result.success(ApplicationConverter.convertToVO(application));
+        return Result.success(applicationService.enrichVO(application));
     }
 
     // ====== 写操作 ======
@@ -72,7 +72,7 @@ public class ApplicationController {
         Application application = ApplicationConverter.convertToEntity(request);
 
         Application created = applicationService.create(application);
-        return Result.created(ApplicationConverter.convertToVO(created));
+        return Result.created(applicationService.enrichVO(created));
     }
 
     /**
@@ -96,7 +96,7 @@ public class ApplicationController {
         Application application = ApplicationConverter.convertToEntity(request);
 
         Application updated = applicationService.update(application);
-        return Result.success(ApplicationConverter.convertToVO(updated));
+        return Result.success(applicationService.enrichVO(updated));
     }
 
     /**
@@ -120,7 +120,7 @@ public class ApplicationController {
         if (updated == null) {
             return Result.notFound();
         }
-        return Result.success(ApplicationConverter.convertToVO(updated));
+        return Result.success(applicationService.enrichVO(updated));
     }
 
     // ====== 删除 ======
