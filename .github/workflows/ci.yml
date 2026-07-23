@@ -1,0 +1,44 @@
+# =============================================================================
+# OfferPilot CI — GitHub Actions
+# 每次 push / PR → 自动编译 + 跑全部单元测试 + JaCoCo 覆盖率报告
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 代码
+        uses: actions/checkout@v4
+
+      - name: 设置 JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 编译 + 跑测试 + 生成覆盖率报告
+        run: mvn -B clean verify
+
+      - name: 上传 JaCoCo 覆盖率报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-report
+          path: '**/target/site/jacoco*/'
+
+      - name: 上传测试结果
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: '**/target/surefire-reports/'

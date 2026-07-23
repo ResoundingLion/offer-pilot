@@ -2,6 +2,8 @@
 
 > 个人开发者独立完成的微服务全栈项目，覆盖求职全生命周期管理。
 
+[![CI](https://github.com/ResoundingLion/offer-pilot/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ResoundingLion/offer-pilot/actions/workflows/ci.yml)
+
 ## 📌 项目简介
 
 OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪投递进度、管理面试安排、跟进 Offer 决策。采用 Spring Cloud Alibaba 微服务架构，从 0 到 1 独立完成系统设计、编码实现与部署验证。
@@ -146,7 +148,7 @@ GET /api/applications → 返回：
 | Sprint 2 | 投递状态机 + 面试/Offer 管理 | ✅ 完成 |
 | Sprint 3 | 跨服务 Feign 调用 | ✅ 完成 |
 | Sprint 4 | UI 赛博改造 + Pipeline 流水线 + 一键推进 | ✅ 完成 |
-| Sprint 5 | 单元测试 + GitHub Actions CI | ⬜ 待开始 |
+| Sprint 5 | 单元测试 + GitHub Actions CI | ✅ 完成 |
 | Sprint 6 | Docker 容器化部署 + CI/CD | ⬜ 待开始 |
 
 ## 📚 文档索引
