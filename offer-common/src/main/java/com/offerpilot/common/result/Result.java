@@ -90,4 +90,12 @@ public class Result<T> {
     public static <T> Result<T> internalError(String message) {
         return error(ResultCode.INTERNAL_ERROR, message);
     }
+
+    public static <T> Result<T> forbidden() {
+        return error(ResultCode.FORBIDDEN);
+    }
+
+    public static <T> Result<T> forbidden(String message) {
+        return error(ResultCode.FORBIDDEN, message);
+    }
 }

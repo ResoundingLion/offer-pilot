@@ -7,6 +7,7 @@ import com.offerpilot.common.result.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,16 +24,18 @@ public class DashboardController {
     private final ApplicationService applicationService;
 
     @GetMapping("/stats")
-    public Result<DashboardVO> getStats() {
-        DashboardVO stats = applicationService.getDashboardStats();
+    public Result<DashboardVO> getStats(
+            @RequestHeader("X-User-Id") Long userId) {
+        DashboardVO stats = applicationService.getDashboardStats(userId);
         return Result.success(stats);
     }
 
     /**
-     * GET /api/applications/dashboard/pipeline —— 所有投递的阶段灯流水线
+     * GET /api/applications/dashboard/pipeline —— 当前用户的投递阶段灯流水线
      */
     @GetMapping("/pipeline")
-    public Result<List<PipelineVO>> getPipeline() {
-        return Result.success(applicationService.getPipeline());
+    public Result<List<PipelineVO>> getPipeline(
+            @RequestHeader("X-User-Id") Long userId) {
+        return Result.success(applicationService.getPipeline(userId));
     }
 }

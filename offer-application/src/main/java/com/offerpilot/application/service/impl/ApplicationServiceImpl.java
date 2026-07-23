@@ -28,6 +28,7 @@ import com.offerpilot.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 
 import static com.offerpilot.common.result.ResultCode.BAD_REQUEST;
+import com.offerpilot.common.result.ResultCode;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -50,11 +51,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public Application findById(Long id) {
         return applicationMapper.selectById(id);
-    }
-
-    @Override
-    public List<Application> findAll() {
-        return applicationMapper.selectList(null);
     }
 
     @Override
@@ -154,8 +150,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     // ===== 仪表盘统计 =====
 
     @Override
-    public DashboardVO getDashboardStats() {
-        List<Application> all = applicationMapper.selectList(null);
+    public DashboardVO getDashboardStats(Long userId) {
+        LambdaQueryWrapper<Application> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Application::getUserId, userId);
+        List<Application> all = applicationMapper.selectList(queryWrapper);
         long total = all.size();
 
         // 活跃状态（非终止态）
@@ -250,10 +248,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     );
 
     @Override
-    public ApplicationVO advance(Long id, AdvanceRequest request) {
+    public ApplicationVO advance(Long id, Long userId, AdvanceRequest request) {
         // 1. 查投递记录
         Application app = applicationMapper.selectById(id);
         if (app == null) return null;
+
+        // 所有权校验
+        if (!app.getUserId().equals(userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权操作此投递记录");
+        }
 
         String targetStage = request.getTargetStage();
         if (targetStage == null || targetStage.isBlank()) {
@@ -375,8 +378,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     // ===== Pipeline 流水线 =====
 
     @Override
-    public List<PipelineVO> getPipeline() {
-        List<Application> all = applicationMapper.selectList(null);
+    public List<PipelineVO> getPipeline(Long userId) {
+        LambdaQueryWrapper<Application> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Application::getUserId, userId);
+        List<Application> all = applicationMapper.selectList(queryWrapper);
         // 按更新时间倒序
         all.sort((a, b) -> {
             LocalDateTime ua = a.getUpdatedAt();

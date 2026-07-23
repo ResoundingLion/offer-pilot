@@ -11,8 +11,6 @@ import java.util.List;
 public interface ApplicationService {
     Application findById(Long id);
 
-    List<Application> findAll();
-
     Application create(Application application);
 
     Application update(Application application);
@@ -34,16 +32,16 @@ public interface ApplicationService {
     // ===== 仪表盘统计 =====
 
     /**
-     * 获取仪表盘统计数据
+     * 获取仪表盘统计数据（仅统计该用户的投递）
      */
-    DashboardVO getDashboardStats();
+    DashboardVO getDashboardStats(Long userId);
 
     // ===== Pipeline 流水线 =====
 
     /**
-     * 获取所有投递的 Pipeline 阶段灯数据（按更新时间倒序）
+     * 获取指定用户的 Pipeline 阶段灯数据（按更新时间倒序）
      */
-    List<PipelineVO> getPipeline();
+    List<PipelineVO> getPipeline(Long userId);
 
     // ===== 一键推进 =====
 
@@ -51,5 +49,5 @@ public interface ApplicationService {
      * 一键推进投递到目标阶段
      * 同时处理：状态变更 + 面试记录创建 + Offer 创建
      */
-    ApplicationVO advance(Long id, AdvanceRequest request);
+    ApplicationVO advance(Long id, Long userId, AdvanceRequest request);
 }

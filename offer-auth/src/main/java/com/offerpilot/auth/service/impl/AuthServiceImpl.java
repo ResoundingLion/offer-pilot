@@ -1,5 +1,7 @@
 package com.offerpilot.auth.service.impl;
 
+import com.offerpilot.api.client.UserClient;
+import com.offerpilot.api.dto.UserDTO;
 import com.offerpilot.auth.dto.AuthVO;
 import com.offerpilot.auth.dto.LoginRequest;
 import com.offerpilot.auth.dto.RegisterRequest;
@@ -25,6 +27,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserAccountMapper userAccountMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserClient userClient;
 
     @Override
     public AuthVO register(RegisterRequest request) {
@@ -38,21 +41,22 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ResultCode.USERNAME_EXISTS);
         }
 
-        // 创建用户账号
+        // 1. 调用用户服务创建用户资料
+        UserDTO userDTO = new UserDTO(null, username, null, null);
+        UserDTO createdUser = userClient.createUser(userDTO);
+
+        // 2. 创建登录账号，关联真实的 userId
         UserAccount account = new UserAccount();
+        account.setUserId(createdUser.getId());
         account.setUsername(username);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setStatus(1);
-        account.setUserId(0L); // 占位，后续用户服务完善后关联
         userAccountMapper.insert(account);
 
-        // 用 account.id 作为 userId（MVP 简化方案）
-        account.setUserId(account.getId());
-        userAccountMapper.updateById(account);
-
-        // 生成 Token
+        // 3. 生成 Token
         String token = jwtUtil.generateToken(account.getUserId(), username);
-        log.info("用户注册成功: userId={}, username={}", account.getUserId(), username);
+        log.info("用户注册成功: userId={}, username={}, user_id={}",
+                account.getUserId(), username, createdUser.getId());
 
         return AuthVO.builder()
                 .userId(account.getUserId())

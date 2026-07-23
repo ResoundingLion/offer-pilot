@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +39,9 @@ public class ApplicationController {
      * GET /api/applications —— 全部投递列表
      */
     @GetMapping
-    public Result<List<ApplicationVO>> getAllApplications() {
-        List<Application> applications = applicationService.findAll();
+    public Result<List<ApplicationVO>> getAllApplications(
+            @RequestHeader("X-User-Id") Long userId) {
+        List<Application> applications = applicationService.findAllByUserId(userId);
         List<ApplicationVO> vos = applications.stream()
                 .map(applicationService::enrichVO)
                 .collect(Collectors.toList());
@@ -50,10 +52,15 @@ public class ApplicationController {
      * GET /api/applications/{id} —— 投递详情
      */
     @GetMapping("/{id}")
-    public Result<ApplicationVO> getApplicationById(@PathVariable Long id) {
+    public Result<ApplicationVO> getApplicationById(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId) {
         Application application = applicationService.findById(id);
         if (application == null) {
             return Result.notFound();
+        }
+        if (!application.getUserId().equals(userId)) {
+            return Result.forbidden();
         }
         return Result.success(applicationService.enrichVO(application));
     }
@@ -69,9 +76,12 @@ public class ApplicationController {
      *   3. Entity 和 DTO 职责分离，互不影响
      */
     @PostMapping
-    public Result<ApplicationVO> createApplication(@Valid @RequestBody ApplicationCreateRequest request) {
+    public Result<ApplicationVO> createApplication(
+            @Valid @RequestBody ApplicationCreateRequest request,
+            @RequestHeader("X-User-Id") Long userId) {
         Application application = ApplicationConverter.convertToEntity(request);
-
+        // 以网关注入的 userId 为准，覆盖前端传入
+        application.setUserId(userId);
         Application created = applicationService.create(application);
         return Result.created(applicationService.enrichVO(created));
     }
@@ -87,11 +97,16 @@ public class ApplicationController {
     @PutMapping("/{id}")
     public Result<ApplicationVO> updateApplication(
             @PathVariable Long id,
-            @Valid @RequestBody ApplicationUpdateRequest request) {
+            @Valid @RequestBody ApplicationUpdateRequest request,
+            @RequestHeader("X-User-Id") Long userId) {
         // 先检查存在性
         Application existing = applicationService.findById(id);
         if (existing == null) {
             return Result.notFound();
+        }
+        // 所有权校验
+        if (!existing.getUserId().equals(userId)) {
+            return Result.forbidden();
         }
 
         Application application = ApplicationConverter.convertToEntity(request);
@@ -116,7 +131,15 @@ public class ApplicationController {
     @PatchMapping("/{id}/status")
     public Result<ApplicationVO> updateApplicationStatus(
             @PathVariable Long id,
-            @Valid @RequestBody StatusUpdateRequest request) {
+            @Valid @RequestBody StatusUpdateRequest request,
+            @RequestHeader("X-User-Id") Long userId) {
+        Application existing = applicationService.findById(id);
+        if (existing == null) {
+            return Result.notFound();
+        }
+        if (!existing.getUserId().equals(userId)) {
+            return Result.forbidden();
+        }
         Application updated = applicationService.updateStatus(id, request.getStatus());
         if (updated == null) {
             return Result.notFound();
@@ -130,8 +153,9 @@ public class ApplicationController {
     @PatchMapping("/{id}/advance")
     public Result<ApplicationVO> advanceApplication(
             @PathVariable Long id,
-            @RequestBody AdvanceRequest request) {
-        ApplicationVO vo = applicationService.advance(id, request);
+            @RequestBody AdvanceRequest request,
+            @RequestHeader("X-User-Id") Long userId) {
+        ApplicationVO vo = applicationService.advance(id, userId, request);
         if (vo == null) {
             return Result.notFound();
         }
@@ -144,10 +168,15 @@ public class ApplicationController {
      * DELETE /api/applications/{id} —— 删除投递
      */
     @DeleteMapping("/{id}")
-    public Result<Void> deleteApplication(@PathVariable Long id) {
+    public Result<Void> deleteApplication(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId) {
         Application existing = applicationService.findById(id);
         if (existing == null) {
             return Result.notFound();
+        }
+        if (!existing.getUserId().equals(userId)) {
+            return Result.forbidden();
         }
         applicationService.deleteById(id);
         return Result.success();
