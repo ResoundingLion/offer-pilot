@@ -32,6 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.offerpilot.application.enums.ApplicationStatus.*;
 import static org.assertj.core.api.Assertions.*;
@@ -53,6 +54,7 @@ class ApplicationServiceImplTest {
     @Mock private OfferService offerService;
     @Mock private CompanyClient companyClient;
     @Mock private PositionClient positionClient;
+    @Mock private CacheService cacheService;
 
     private ApplicationServiceImpl service;
 
@@ -71,7 +73,14 @@ class ApplicationServiceImplTest {
     void setUp() {
         service = new ApplicationServiceImpl(
                 applicationMapper, interviewMapper, offerMapper,
-                interviewService, offerService, companyClient, positionClient);
+                interviewService, offerService, companyClient, positionClient, cacheService);
+
+        // 让 CacheService 的 mock 实际执行 loader（走 Feign 调用）
+        lenient().when(cacheService.getOrLoad(anyString(), eq(String.class), any()))
+                .thenAnswer(invocation -> {
+                    Supplier<String> loader = invocation.getArgument(2);
+                    return loader.get();
+                });
 
         app = new Application();
         app.setId(100L);

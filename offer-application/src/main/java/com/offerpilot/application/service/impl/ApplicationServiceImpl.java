@@ -19,6 +19,7 @@ import com.offerpilot.application.mapper.ApplicationMapper;
 import com.offerpilot.application.mapper.InterviewMapper;
 import com.offerpilot.application.mapper.OfferMapper;
 import com.offerpilot.application.service.ApplicationService;
+import com.offerpilot.application.service.CacheService;
 import com.offerpilot.application.service.InterviewService;
 import com.offerpilot.application.service.OfferService;
 import com.offerpilot.application.vo.ApplicationVO;
@@ -47,6 +48,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final OfferService offerService;
     private final CompanyClient companyClient;
     private final PositionClient positionClient;
+    private final CacheService cacheService;
 
     @Override
     public Application findById(Long id) {
@@ -124,25 +126,36 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         ApplicationVO vo = ApplicationConverter.convertToVO(application);
 
-        // 跨服务查询公司名
-        try {
-            CompanyDTO company = companyClient.getCompanyById(application.getCompanyId());
-            if (company != null) {
-                vo.setCompanyName(company.getName());
-            }
-        } catch (Exception e) {
-            // Feign 调用失败时，companyName 保持 null，不影响主流程
-        }
+        // 跨服务查询公司名（走缓存）
+        String companyName = cacheService.getOrLoad(
+                "company:" + application.getCompanyId(),
+                String.class,
+                () -> {
+                    try {
+                        CompanyDTO dto = companyClient.getCompanyById(application.getCompanyId());
+                        return dto != null ? dto.getName() : null;
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+        );
+        vo.setCompanyName(companyName);
 
-        // 跨服务查询岗位名
-        try {
-            PositionDTO position = positionClient.getPositionById(application.getPositionId());
-            if (position != null) {
-                vo.setPositionTitle(position.getTitle());
-            }
-        } catch (Exception e) {
-            // Feign 调用失败时，positionTitle 保持 null
-        }
+        // 跨服务查询岗位名（走缓存）
+        String positionTitle = cacheService.getOrLoad(
+                "position:" + application.getPositionId(),
+                String.class,
+                () -> {
+                    try {
+                        PositionDTO dto =
+                                positionClient.getPositionById(application.getPositionId());
+                        return dto != null ? dto.getTitle() : null;
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+        );
+        vo.setPositionTitle(positionTitle);
 
         return vo;
     }
@@ -403,17 +416,36 @@ public class ApplicationServiceImpl implements ApplicationService {
 
             List<PipelineVO.StageInfo> stages = buildStages(app, interviews, offer);
 
-            // 跨服务查公司 + 岗位名
-            String companyName = null;
-            String positionTitle = null;
-            try {
-                var company = companyClient.getCompanyById(app.getCompanyId());
-                if (company != null) companyName = company.getName();
-            } catch (Exception ignored) {}
-            try {
-                var position = positionClient.getPositionById(app.getPositionId());
-                if (position != null) positionTitle = position.getTitle();
-            } catch (Exception ignored) {}
+            // 跨服务查公司 + 岗位名（走缓存）
+            String companyName = cacheService.getOrLoad(
+                    "company:" + app.getCompanyId(),
+                    String.class,
+                    () -> {
+                        try {
+                            var company =
+                                    companyClient.getCompanyById(app.getCompanyId());
+                            return company != null ? company.getName() :
+                                    null;
+                        } catch (Exception ignored) {
+                            return null;
+                        }
+                    }
+            );
+
+            String positionTitle = cacheService.getOrLoad(
+                    "position:" + app.getPositionId(),
+                    String.class,
+                    () -> {
+                        try {
+                            var position =
+                                    positionClient.getPositionById(app.getPositionId());
+                            return position != null ? position.getTitle()
+                                    : null;
+                        } catch (Exception ignored) {
+                            return null;
+                        }
+                    }
+            );
 
             return PipelineVO.builder()
                     .applicationId(app.getId())
