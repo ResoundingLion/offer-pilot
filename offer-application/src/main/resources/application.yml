@@ -12,6 +12,19 @@ spring:
         username: nacos
         password: nacos
         file-extension: yaml
+    openfeign:
+      client:
+        config:
+          default:
+            # 连接超时：5 秒
+            connect-timeout: 5000
+            # 读取超时：10 秒（Feign 默认 60s 太长了）
+            read-timeout: 10000
   config:
     import:
       - optional:nacos:offer-application.yaml
+
+# ===== Sentinel =====
+feign:
+  sentinel:
+    enabled: true

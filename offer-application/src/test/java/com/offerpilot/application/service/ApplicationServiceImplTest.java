@@ -312,15 +312,15 @@ class ApplicationServiceImplTest {
         }
 
         @Test
-        @DisplayName("Feign 失败时 companyName/positionTitle 为 null，不影响主流程")
+        @DisplayName("Feign 失败时 companyName/positionTitle 显示加载失败，不影响主流程")
         void feignFailure() {
             app.setStatus(APPLIED);
             when(companyClient.getCompanyById(10L)).thenThrow(new RuntimeException("服务不可用"));
             when(positionClient.getPositionById(20L)).thenThrow(new RuntimeException("服务不可用"));
 
             ApplicationVO vo = service.enrichVO(app);
-            assertThat(vo.getCompanyName()).isNull();
-            assertThat(vo.getPositionTitle()).isNull();
+            assertThat(vo.getCompanyName()).isEqualTo("(⏳ 加载失败)");
+            assertThat(vo.getPositionTitle()).isEqualTo("(⏳ 加载失败)");
             // 核心字段不受影响
             assertThat(vo.getId()).isEqualTo(100L);
             assertThat(vo.getUserId()).isEqualTo(userId);

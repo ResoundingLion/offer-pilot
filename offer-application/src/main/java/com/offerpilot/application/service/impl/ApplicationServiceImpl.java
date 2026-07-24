@@ -139,7 +139,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                 }
         );
-        vo.setCompanyName(companyName);
+        // null → 业务默认值（Feign 熔断/降级兜底）
+        vo.setCompanyName(companyName != null ? companyName : "(⏳ 加载失败)");
 
         // 跨服务查询岗位名（走缓存）
         String positionTitle = cacheService.getOrLoad(
@@ -155,7 +156,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                 }
         );
-        vo.setPositionTitle(positionTitle);
+        vo.setPositionTitle(positionTitle != null ? positionTitle : "(⏳ 加载失败)");
 
         return vo;
     }
@@ -449,8 +450,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
             return PipelineVO.builder()
                     .applicationId(app.getId())
-                    .companyName(companyName)
-                    .positionTitle(positionTitle)
+                    .companyName(companyName != null ? companyName : "(⏳ 加载失败)")
+                    .positionTitle(positionTitle != null ? positionTitle : "(⏳ 加载失败)")
                     .updatedAt(app.getUpdatedAt())
                     .stages(stages)
                     .build();
