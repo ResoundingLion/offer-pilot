@@ -1,6 +1,7 @@
 package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
+import com.offerpilot.common.service.MinioService;
 import com.offerpilot.user.converter.UserConverter;
 import com.offerpilot.user.dto.ProfileUpdateRequest;
 import com.offerpilot.user.dto.UserCreateRequest;
@@ -31,8 +32,12 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserService userService;
+    private final MinioService minioService;
 
     // ====== 个人中心（当前用户） ======
+
+    /** 默认头像路径 */
+    private static final String DEFAULT_AVATAR = "avatar/default/default.png";
 
     /**
      * GET /api/users/me —— 获取当前用户资料
@@ -44,14 +49,17 @@ public class UserController {
             @RequestHeader(value = "X-Username", required = false) String username) {
         User user = userService.findById(userId);
         if (user == null) {
-            // 自动创建 user 记录
+            // 自动创建 user 记录，绑定默认头像
             user = new User();
             user.setId(userId);
             user.setName(username != null ? username : "用户" + userId);
+            user.setAvatar(DEFAULT_AVATAR);
             userService.create(user);
             log.info("自动创建用户资料: userId={}, name={}", userId, user.getName());
         }
-        return Result.success(UserConverter.convertToVO(user));
+        UserVO vo = UserConverter.convertToVO(user);
+        enrichAvatarUrl(vo);
+        return Result.success(vo);
     }
 
     /**
@@ -68,6 +76,7 @@ public class UserController {
             existing = new User();
             existing.setId(userId);
             existing.setName(username != null ? username : "用户" + userId);
+            existing.setAvatar(DEFAULT_AVATAR);
             userService.create(existing);
             log.info("自动创建用户资料: userId={}, name={}", userId, existing.getName());
         }
@@ -79,7 +88,9 @@ public class UserController {
         if (request.getAvatar() != null) existing.setAvatar(request.getAvatar());
 
         User updated = userService.update(existing);
-        return Result.success(UserConverter.convertToVO(updated));
+        UserVO vo = UserConverter.convertToVO(updated);
+        enrichAvatarUrl(vo);
+        return Result.success(vo);
     }
 
     // ====== 通用用户查询 ======
@@ -93,7 +104,9 @@ public class UserController {
             return Result.notFound();
         }
 
-        return Result.success(UserConverter.convertToVO(user));
+        UserVO vo = UserConverter.convertToVO(user);
+        enrichAvatarUrl(vo);
+        return Result.success(vo);
     }
 
     // 查所有用户
@@ -103,6 +116,7 @@ public class UserController {
 
         List<UserVO> vos = users.stream()
                 .map(UserConverter::convertToVO)
+                .peek(this::enrichAvatarUrl)
                 .collect(Collectors.toList());
         return Result.success(vos);
     }
@@ -112,7 +126,9 @@ public class UserController {
     public Result<UserVO> createUser(@Valid @RequestBody UserCreateRequest userCreateRequest) {
         User user = UserConverter.convertToEntity(userCreateRequest);
         User userCreated = userService.create(user);
-        return Result.created(UserConverter.convertToVO(userCreated));
+        UserVO vo = UserConverter.convertToVO(userCreated);
+        enrichAvatarUrl(vo);
+        return Result.created(vo);
     }
 
     // 更新用户
@@ -125,7 +141,9 @@ public class UserController {
 
         User user = UserConverter.convertToEntity(userUpdateRequest);
         User updated = userService.update(user);
-        return Result.success(UserConverter.convertToVO(updated));
+        UserVO vo = UserConverter.convertToVO(updated);
+        enrichAvatarUrl(vo);
+        return Result.success(vo);
     }
 
     @DeleteMapping("/{id}")
@@ -139,4 +157,14 @@ public class UserController {
         return Result.success();
     }
 
+    // ==================== 内部辅助 ====================
+
+    /**
+     * 根据 avatar 路径实时生成头像访问 URL
+     */
+    private void enrichAvatarUrl(UserVO vo) {
+        if (vo.getAvatar() != null) {
+            vo.setAvatarUrl(minioService.getUrl(vo.getAvatar()));
+        }
+    }
 }

@@ -4,6 +4,18 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.2.0-SNAPSHOT] — 2026-07-27
+
+### 📋 路线全面修订
+
+- **全部规划内功能一个不漏**：用户确认时间充裕，所有遗漏功能全部补上
+- 新增 3 项遗漏：MinIO 文件存储、RabbitMQ 消息队列、智能助手 offer-ai
+- 恢复 2 项遗漏：Resume 简历管理、Controller 层测试
+- 保留原有规划：Knife4j、Arthas 调优、全链路验证
+- 更新 ROADMAP.md 为七阶段路线
+
+---
+
 ## [1.1.0-SNAPSHOT] — 2026-07-19
 
 ### 🎨 深色科技风 UI 增强

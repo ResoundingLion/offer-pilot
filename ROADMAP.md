@@ -1,80 +1,81 @@
-# OfferPilot 开发路线图
+# OfferPilot 开发路线图（2026-07-27 全面修订）
 
-## 总体排期（2026年7月-9月）
+目标：秋招前交付可演示的完整项目，全部规划内功能一个不漏。
 
-目标：秋招前交付可演示的 MVP。
+---
+
+## ✅ 已完成的 Sprint
+
+### Sprint 1-4（2026-07-13 ~ 2026-07-19）—— 基础功能 + 前端全栈
+
+| Sprint | 内容 | 状态 |
+|--------|------|------|
+| Sprint 1 | 脚手架搭建（父 POM、Docker、Nacos、Gateway、Auth）| ✅ |
+| Sprint 2 | 用户 + 公司 + 岗位 CRUD（15 接口）| ✅ |
+| Sprint 3 | 投递 + 面试 + Offer + 状态机（15 接口）| ✅ |
+| Sprint 4 | Vue 3 前端 7 页全功能 + Pipeline + 一键推进 | ✅ |
+
+### 工程化增强（2026-07-23 ~ 2026-07-24）
+
+| 站 | 内容 | 状态 |
+|----|------|------|
+| 第一站 | 单元测试（34 测例全绿）| ✅ |
+| 第二站 | GitHub Actions CI + JaCoCo | ✅ |
+| 第三站 | Redis 缓存（Cache-Aside + 防雪崩/穿透）| ✅ |
+| 第四站 | Sentinel 熔断降级（Feign + FallbackFactory）| ✅ |
+
+---
+
+## 🚧 后续路线（七阶段）
+
+从 2026-07-27 开始，按顺序交付，每站独立可演示。
 
 ```
-第1周 ──── 第2周 ──── 第3周 ──── 第4周 ──── 第5周 ──── 第6周 ──── 第7周
-│          │          │          │          │          │          │
-├─ Sprint 1 ─┤  ├─ Sprint 2 ─┤  ├─ Sprint 3 ─┤  ├─ Sprint 4 ─┤  ├─ Sprint 5
-  脚手架搭建    用户+公司+      投递+面试+     前端全栈+     单元测试+
-                岗位 CRUD      Offer 管理      Pipeline+      CI/CD
-                                              一键推进
+第一阶段：Docker 全家桶 🐳          ← MinIO + RabbitMQ + 文件上传
+第二阶段：RabbitMQ 消息队列 📨      ← 异步解耦
+第三阶段：智能助手 offer-ai 🤖      ← DeepSeek API 集成
+第四阶段：Resume 简历管理 📄        ← 补领域模型
+第五阶段：测试补漏 🧪               ← Controller 层测试
+第六阶段：Knife4j + 全链路验证 🔧   ← API 文档 + 种子数据
+第七阶段：Arthas 性能调优 📊        ← 差异化亮点
 ```
 
----
+### 第一阶段：Docker 全家桶
+- docker-compose 补齐 MinIO + RabbitMQ 容器
+- MinIO 文件上传/下载 API（头像、简历附件）
+- 前端对接文件上传
+- 面试价值：⭐⭐⭐⭐ 部署标配
 
-## Sprint 1（完成）—— 脚手架与基础设施
+### 第二阶段：RabbitMQ 消息队列
+- 投递状态变更 → 发 MQ 消息
+- 交换机/队列/路由键设计
+- 消费者处理通知
+- 面试价值：⭐⭐⭐⭐ 异步解耦面试必问
 
-- ✅ 父 POM（Spring Boot 3.2.12 + Spring Cloud Alibaba 2023.0.3.4）
-- ✅ Docker Compose：MySQL/Redis/Nacos
-- ✅ Nacos 配置中心 + SQL 建表脚本
-- ✅ offer-common：Result、异常处理、自动填充
-- ✅ offer-gateway：路由 + 跨域 + JWT 全局过滤器
-- ✅ offer-auth：注册/登录 + JWT 签发
+### 第三阶段：智能助手 offer-ai 🤖
+- 新建 offer-ai 微服务（注册 Nacos）
+- DeepSeek API 集成（Key 配在 application.yml 可手动改）
+- JD 分析 + 面试题生成
+- 前端 AI 助手页面
+- 面试价值：⭐⭐⭐⭐⭐ 差异化亮点
 
----
+### 第四阶段：Resume 简历管理
+- resume 表（支持多版本）+ CRUD API
+- 前端简历页面
+- 面试价值：⭐⭐⭐ 功能完整性
 
-## Sprint 2（完成）—— 用户 + 公司 + 岗位
+### 第五阶段：测试补漏
+- Controller 层 MockMVC 测试（CRUD + 异常路径覆盖）
+- 面试价值：⭐⭐⭐
 
-- ✅ User CRUD（5 接口）
-- ✅ Company CRUD（5 接口）
-- ✅ Position CRUD（5 接口）
-- ✅ 内部接口：Feign 跨服务调用支持
+### 第六阶段：Knife4j + 全链路验证 🔧
+- Knife4j API 文档配置 + 网关放行
+- 种子数据预填充 SQL
+- 全链路测试验证
+- 面试价值：⭐⭐⭐ 收尾
 
----
-
-## Sprint 3（完成）—— 投递 + 面试 + Offer
-
-- ✅ 6 枚举 + 3 Entity + 3 Mapper + 3 Service
-- ✅ Application 6 接口（含状态机）
-- ✅ Interview 4 接口 + Offer 4 接口
-- ✅ Dashboard 统计接口
-- ✅ Feign 跨服务调用（companyName/positionTitle）
-
----
-
-## Sprint 4（完成）—— 前端全栈 + Pipeline 流水线
-
-- ✅ Vue 3 七页前端全部完成
-- ✅ 深色科技风 UI（扫描线、粒子登录、赛博卡片、页面转场）
-- ✅ Pipeline 投递进度流水线（5 态阶段灯）
-- ✅ 一键推进（动态弹窗 + 面试/Offer 一次创建）
-- ✅ 流程配置（新增投递可选测评/笔试/多轮面试）
-- ✅ Offer 占位（不填薪资不改状态）
-
----
-
-## Sprint 5（待开始）—— 单元测试 + CI/CD
-
-| 任务 | 说明 |
-|------|------|
-| 5.1 Service 层测试 | Mock Mapper + Mock Feign |
-| 5.2 Controller 层测试 | MockMVC |
-| 5.3 状态机流转测试 | 合法/非法路径全覆盖 |
-| 5.4 GitHub Actions CI | push 自动编译 + 跑测试 |
-| 5.5 JaCoCo 覆盖率 | 报告 + README badge |
-
----
-
-## 后续（秋招后/有余力）
-
-| 模块 | 说明 |
-|------|------|
-| Redis 缓存 | 缓存 Feign 结果、Cache-Aside、防雪崩穿透 |
-| Sentinel 熔断 | Feign 降级 + 限流 |
-| Docker 容器化 | 4 个服务打镜像 + 一键启动 |
-| Knife4j | API 文档自动生成 |
-| Arthas 调优 | 慢查询定位 + 修复 |
-| 其他 | 面试提醒、简历管理、AI 分析 |
+### 第七阶段：Arthas 性能调优 📊
+- 制造慢查询 / N+1 场景
+- Arthas trace 定位慢方法
+- 修复 + 写调优报告放 README
+- 面试价值：⭐⭐⭐⭐ 应届生差异化亮点

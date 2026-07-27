@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserInternalController {
 
+    /** 默认头像路径 */
+    private static final String DEFAULT_AVATAR = "avatar/default/default.png";
+
     private final UserService userService;
 
     @PostMapping
@@ -26,6 +29,7 @@ public class UserInternalController {
         user.setName(dto.getName() != null ? dto.getName() : "用户" + System.currentTimeMillis());
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
+        user.setAvatar(DEFAULT_AVATAR);
         userService.create(user);
         return new UserDTO(user.getId(), user.getName(), user.getEmail(), user.getPhone());
     }
