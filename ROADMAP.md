@@ -55,9 +55,10 @@
 
 ## 📖 文档索引
 
-| 文件 | 说明 |
+| 文档 | 说明 |
 |------|------|
+| [README.md](README.md) | 项目首页（技术栈 / 架构 / 快速启动 / 亮点） |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 微服务架构设计 |
-| [DATABASE.md](DATABASE.md) | 数据库设计（ER 图/索引/约束） |
-| [PROJECT.md](PROJECT.md) | 技术栈与依赖说明 |
-| [项目脚手架清单.md](项目脚手架清单.md) | 全量文件清单 |
+| [API_SPEC.md](API_SPEC.md) | REST API 详细规范 |
+| [DATABASE.md](DATABASE.md) | 数据库设计（ER 图 + 表结构 + 索引 + 状态流转） |
+| [CHANGELOG.md](CHANGELOG.md) | 更新日志 |

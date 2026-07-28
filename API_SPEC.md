@@ -71,8 +71,6 @@
 
 ---
 
----
-
 ## User API (offer-user)
 
 | 方法 | 路径 | 说明 |
@@ -375,8 +373,6 @@
 
 ---
 
----
-
 ## File API (offer-user / MinIO)
 
 文件上传/下载服务，由 offer-user 模块提供，MinIO 对象存储在后端。
@@ -469,8 +465,6 @@
 
 > AI API Key 配置在 Nacos 配置中心（`offer-ai.yaml`），可切换不同模型或 API 提供商。
 > 目前使用 DeepSeek Anthropic 兼容接口（`deepseek-v4-flash` 模型）。
-
----
 
 ---
 
