@@ -46,7 +46,7 @@ offer-pilot (父工程)
  ├── offer-auth          — 认证服务
  ├── offer-user          — 用户/公司/岗位服务
  ├── offer-application   — 投递/面试/Offer 服务（含 RabbitMQ 状态变更事件）
- ├── offer-ai            — 智能助手（DeepSeek API，开发中）
+ ├── offer-ai            — 智能助手（DeepSeek API 已集成）
  ├── docker-compose.yml   — 一键启动环境
  └── sql/                 — 数据库初始化脚本
 ```

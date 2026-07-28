@@ -318,6 +318,42 @@
 
 ---
 
+## AI API (offer-ai)
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/ai/chat | AI 对话 |
+| GET | /api/ai/test | 服务存活检测（白名单，无需 Token） |
+
+### POST /api/ai/chat
+
+调用 DeepSeek API 进行 AI 对话。
+
+**Request：**
+```json
+{
+  "message": "帮我分析这个 JD：精通 Java、Spring Cloud"
+}
+```
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": "Spring Cloud是一套基于Spring Boot的微服务解决方案...",
+  "message": "success"
+}
+```
+
+**错误响应：**
+- 400: 消息为空
+- 500: AI API 调用失败（网络/Key 过期等，返回友好提示）
+
+> AI API Key 配置在 Nacos 配置中心（`offer-ai.yaml`），可切换不同模型或 API 提供商。
+> 目前使用 DeepSeek Anthropic 兼容接口（`deepseek-v4-flash` 模型）。
+
+---
+
 ## 接口命名规范
 
 - 资源用复数名词：`/api/users` 而非 `/api/user`

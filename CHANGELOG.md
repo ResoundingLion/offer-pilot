@@ -4,6 +4,25 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.4.0-SNAPSHOT] — 2026-07-28
+
+### 🤖 offer-ai 智能助手微服务
+
+- **新建微服务**：`offer-ai`（端口 8084），注册 Nacos
+- **Gateway 路由**：`/api/ai/**` 转发到 offer-ai
+- **Nacos 配置**：`offer-ai.yaml`（端口 + AI API 参数：base-url/api-key/model）
+- **AiProperties.java**：`@ConfigurationProperties` 读取 AI 配置
+- **AiService.java**：RestTemplate 调 DeepSeek Anthropic 兼容接口（x-api-key 认证）
+- **AiController.java**：`POST /api/ai/chat` 对话接口
+- **前端 AI 助手页面**：聊天界面 + 建议问题 + 消息流 + 打字动画
+- **全链路验证通过**：直连 8084 + 走网关 + 带 Token 认证 + 真实 AI 回复
+
+### 🐛 修复
+
+- **DataSource 自动配置冲突**：AI 服务依赖 offer-common（含 MyBatis-Plus），启动类排除 DataSourceAutoConfiguration
+
+---
+
 ## [1.3.0-SNAPSHOT] — 2026-07-28
 
 ### 🧪 单元测试扩充至 55 测例

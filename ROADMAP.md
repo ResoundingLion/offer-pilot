@@ -30,27 +30,21 @@
 |----|------|------|
 | 第一阶段 | MinIO 文件存储（上传/下载 API + 头像 OSS）| ✅ |
 | 第二阶段 | RabbitMQ 消息队列（Topic Exchange + 状态变更事件）| ✅ |
+| 第三阶段 | offer-ai 智能助手（DeepSeek API + 聊天页面）| ✅ |
+| 第四阶段 | 单元测试扩充至 55 测例 | ✅ |
 
 ---
 
-## 🚧 后续路线（五阶段）
+## 🚧 后续路线（四阶段）
 
 ```
-第一阶段：智能助手 offer-ai 🤖      ← DeepSeek API 集成（MinIO+RabbitMQ 已完成）
-第二阶段：Resume 简历管理 📄        ← 补领域模型
-第三阶段：测试补漏 🧪               ← Controller 层测试
-第四阶段：Knife4j + 全链路验证 🔧   ← API 文档 + 种子数据
-第五阶段：Arthas 性能调优 📊        ← 差异化亮点
+第一阶段：Resume 简历管理 📄        ← 补领域模型
+第二阶段：测试补漏 🧪              ← Controller 层测试
+第三阶段：Knife4j + 全链路验证 🔧  ← API 文档 + 种子数据
+第四阶段：Arthas 性能调优 📊       ← 差异化亮点
 ```
 
-### 第一阶段：智能助手 offer-ai 🤖
-- 新建 offer-ai 微服务（注册 Nacos）
-- DeepSeek API 集成（Key 配在 application.yml 可手动改）
-- JD 分析 + 面试题生成
-- 前端 AI 助手页面
-- 面试价值：⭐⭐⭐⭐⭐ 差异化亮点
-
-### 第二阶段：Resume 简历管理
+### 第一阶段：Resume 简历管理
 - resume 表（支持多版本）+ CRUD API
 - 前端简历页面
 - 面试价值：⭐⭐⭐ 功能完整性
