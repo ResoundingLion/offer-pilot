@@ -4,36 +4,38 @@
 
 [![CI](https://github.com/ResoundingLion/offer-pilot/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ResoundingLion/offer-pilot/actions/workflows/ci.yml)
 
+---
+
 ## 📌 项目简介
 
 OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪投递进度、管理面试安排、跟进 Offer 决策。采用 Spring Cloud Alibaba 微服务架构，从 0 到 1 独立完成系统设计、编码实现与部署验证。
 
-**核心亮点：**
-- 🏗️ **微服务架构** — 4 个独立服务，Nacos 注册发现 + 配置中心
-- 🔐 **统一认证** — JWT 令牌 + Spring Security + 网关全局鉴权
-- 🔄 **状态机驱动** — 投递全生命周期（SAVED → APPLIED → ... → OFFER/REJECTED）含非法流转校验
-- 🌐 **OpenFeign 跨服务调用** — Application 服务跨服务查询 Company/Position 信息
-- 🎯 **Pipeline 投递进度流水线** — Dashboard 可视化阶段灯，一眼看清全部投递状态
-- 🚀 **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
-- 🎨 **深色科技风 UI** — 粒子登录页、赛博卡片、扫描线、页面转场动画
-- 📦 **Docker 容器化** — MySQL/Redis/Nacos/RabbitMQ/MinIO 一键部署
-- 🧪 **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，覆盖核心业务逻辑
+> **个人项目 · 持续更新中**
+
+---
 
 ## 🛠️ 技术栈
 
-| 层次 | 技术 |
-|------|------|
-| 基础框架 | Java 17, Spring Boot 3.2.x, Spring Cloud Alibaba 2023.0.x |
-| 注册/配置中心 | Nacos 2.3.x |
-| 网关 | Spring Cloud Gateway |
-| ORM | MyBatis-Plus 3.5.x |
-| 数据库 | MySQL 8.0, Redis 7.x |
-| 服务调用 | OpenFeign + LoadBalancer |
-| 认证 | JWT + Spring Security |
-| 消息队列 | RabbitMQ (Topic Exchange + 状态变更事件) |
-| 对象存储 | MinIO (预签名 URL + 头像 OSS 上传) |
-| API 文档 | Knife4j (预留) |
-| 部署 | Docker Compose |
+| 层次 | 技术 | 版本 |
+|------|------|:----:|
+| 基础框架 | Java 17, Spring Boot 3.2.x, Spring Cloud Alibaba 2023.0.x | ✅ |
+| 注册/配置中心 | Nacos 2.3.x | ✅ |
+| 网关 | Spring Cloud Gateway | ✅ |
+| ORM | MyBatis-Plus 3.5.x | ✅ |
+| 数据库 | MySQL 8.0 | ✅ |
+| 缓存 | Redis 7.x + spring-boot-starter-data-redis | ✅ |
+| 服务调用 | OpenFeign + LoadBalancer | ✅ |
+| 服务保护 | Sentinel（熔断降级 + FallbackFactory） | ✅ |
+| 认证 | JWT + Spring Security | ✅ |
+| 消息队列 | RabbitMQ（Topic Exchange + 状态变更事件） | ✅ |
+| 对象存储 | MinIO（预签名 URL + 头像 OSS 上传） | ✅ |
+| AI | DeepSeek API（Anthropic 兼容接口） | ✅ |
+| API 文档 | Knife4j 4.5.x（待接入） | 📌 |
+| 测试 | JUnit 5 + Mockito + AssertJ | ✅ |
+| CI | GitHub Actions + JaCoCo 覆盖率 | ✅ |
+| 部署 | Docker Compose（MySQL/Redis/Nacos/RabbitMQ/MinIO） | ✅ |
+
+---
 
 ## 📐 架构图
 
@@ -41,36 +43,111 @@ OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪
 Client (浏览器 / Postman)
     │
     ▼
-┌─────────────────────────────────────┐
-│    Spring Cloud Gateway (8080)      │
-│  路由转发 + JWT 鉴权 + 跨域        │
-└──────────┬──────────────────────────┘
-           │
-    ┌──────┼──────────┬─────────┬──────────┐
-    ▼      ▼          ▼         ▼          ▼
-┌──────┐ ┌──────┐ ┌────────┐ ┌────────┐ ┌────────────┐
-│ Auth │ │ User │ │ Appl.  │ │   AI   │ │   MinIO    │
-│:8081 │ │:8082 │ │:8083   │ │:8084   │ │:9000/9001  │
-└──┬───┘ └──┬───┘ └───┬────┘ └───┬────┘ └────────────┘
-   └───────┬┴─────────┴──────────┘
-           ▼
-    ┌──────────────┐       ┌────────────────┐
-    │ Nacos Server │       │ RabbitMQ       │
-    │ :8848       │       │ :5672 / :15672  │
-    └──────────────┘       └────────────────┘
+┌──────────────────────────────────────┐
+│   Spring Cloud Gateway (8080)        │
+│   路由转发 + JWT 鉴权 + 跨域          │
+└────┬──────┬──────┬──────┬────────────┘
+     │      │      │      │
+┌────▼──┐ ┌▼─────┐┌▼─────┐┌▼──────────┐
+│ Auth  │ │ User ││ Appl ││ AI        │
+│:8081  │ │:8082 ││:8083 ││:8084      │
+└───┬───┘ └──┬───┘└──┬──┘└─────┬─────┘
+    │        │       │         │
+    └────────┴───┬───┴─────────┘
+                 │
+          ┌──────▼──────┐
+          │ Nacos (:8848)│
+          └─────────────┘
+
+  ┌──────┬──────┬──────────┬─────────┐
+  │ MySQL│ Redis│ RabbitMQ │ MinIO   │
+  │:3306 │:6379 │ :5672    │ :9000   │
+  └──────┴──────┴──────────┴─────────┘
+  基础设施层（Docker Compose 一键部署）
 ```
+
+---
 
 ## 🗂️ 模块说明
 
 | 模块 | 说明 | API 数量 |
-|------|------|---------|
+|------|------|:--------:|
+| **offer-common** | 公共模块：统一响应、异常处理、自动填充、MinIO 文件服务 | — |
+| **offer-api** | Feign 接口定义（跨服务通信契约 + 共享 DTO） | — |
 | **offer-gateway** | 网关服务：路由转发、统一 JWT 鉴权、跨域配置 | — |
 | **offer-auth** | 认证服务：注册、登录、JWT 签发 | 2 |
-| **offer-user** | 用户/公司/岗位 CRUD | 15 |
-| **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 | 16 |
+| **offer-user** | 用户/公司/岗位 CRUD + 文件上传/下载 + 内部 Feign 接口 | 15 |
+| **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 + RB 状态变更事件 | 16 |
 | **offer-ai** | 智能助手：DeepSeek API 对话 | 2 |
-| **offer-common** | 公共模块：统一响应、异常处理、自动填充 | — |
-| **offer-api** | Feign 接口定义（跨服务通信契约） | — |
+
+---
+
+## 🚀 项目亮点
+
+- **微服务架构** — 5 个独立微服务，Nacos 注册发现 + 配置中心，Gateway 统一网关
+- **Redis 缓存** — Cache-Aside 模式 + 随机 TTL 防雪崩 + 空值缓存防穿透
+- **Sentinel 熔断降级** — 50% 异常比例 / 10s 统计窗口 / 30s 熔断 + 友好降级文案
+- **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + try-catch 防阻断主流程
+- **MinIO 对象存储** — 预签名 URL 直连 + 默认头像自动绑定
+- **AI 智能助手** — DeepSeek API 集成 + 前端聊天页（消息流 + 打字动画）
+- **Pipeline 流水线** — Dashboard 可视化阶段灯，一眼看清全部投递进度
+- **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
+- **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖
+- **GitHub Actions CI** — push 自动编译 + 跑测试 + JaCoCo 覆盖率报告
+
+---
+
+## 📋 核心领域模型
+
+| 模型 | 关联 | 说明 |
+|------|------|------|
+| User | — | 用户信息（昵称/邮箱/手机/头像） |
+| Company | user_id | 公司信息 |
+| Position | company_id | 岗位（含薪资/城市/学历要求） |
+| Application | user_id, company_id, position_id | 投递记录（状态机 + Pipeline） |
+| Interview | application_id | 面试记录（多轮次） |
+| Offer | application_id | Offer（薪资/奖金/股票 + 状态） |
+| Resume | user_id | 简历（多版本，规划中） |
+
+### 状态流转
+
+```
+SAVED ──→ APPLIED ──→ ONLINE_ASSESSMENT ──→ INTERVIEW ──→ HR_INTERVIEW ──→ OFFER ──→ ACCEPTED
+                                                                                        ↓
+                                    REJECTED ←───────────────────────────────────── DECLINED
+                                    WITHDRAWN (任意状态均可撤回)
+```
+
+> 非法流转被拒绝（如 SAVED 不能直接跳到 OFFER），终止态（REJECTED/WITHDRAWN）不可再变更。
+
+---
+
+## 🔑 核心功能
+
+### 跨服务数据组装
+```
+GET /api/applications → 返回：
+{
+  "companyId": 5,
+  "companyName": "字节跳动",     ← Feign + Redis 缓存
+  "positionId": 5,
+  "positionTitle": "后端开发工程师" ← Feign + Redis 缓存
+}
+```
+
+### 智能 AI 对话
+```
+POST /api/ai/chat → 调用 DeepSeek API
+{"message": "帮我分析这个 JD：精通 Java、Spring Cloud"}
+```
+
+### 文件上传
+```
+POST /api/files/upload → MinIO 预签名 URL
+用户头像 → 选图 → 上传 MinIO → 自动填路径 → 保存
+```
+
+---
 
 ## ⚙️ 快速启动
 
@@ -84,13 +161,14 @@ Client (浏览器 / Postman)
 
 ```bash
 git clone https://github.com/ResoundingLion/offer-pilot.git
+cd offer-pilot
 docker compose up -d
-# 启动 MySQL、Redis、Nacos
+# 启动 MySQL / Redis / Nacos / RabbitMQ / MinIO
 ```
 
 ### 2. 导入 Nacos 配置
 
-浏览器打开 `http://localhost:8848/nacos`（账号/密码：nacos/nacos），导入 `nacos-config` 目录下的 5 个配置文件。
+浏览器打开 `http://localhost:8848/nacos`（账号/密码：nacos/nacos），导入 `nacos-config` 目录下的配置文件。
 
 ### 3. 执行数据库脚本
 
@@ -98,13 +176,12 @@ docker compose up -d
 
 ### 4. 启动微服务
 
-按顺序启动：
-
 ```bash
-mvn spring-boot:run -pl offer-gateway    # 端口 8080
-mvn spring-boot:run -pl offer-auth       # 端口 8081
-mvn spring-boot:run -pl offer-user       # 端口 8082
-mvn spring-boot:run -pl offer-application # 端口 8083
+mvn spring-boot:run -pl offer-gateway       # 端口 8080
+mvn spring-boot:run -pl offer-auth          # 端口 8081
+mvn spring-boot:run -pl offer-user          # 端口 8082
+mvn spring-boot:run -pl offer-application   # 端口 8083
+mvn spring-boot:run -pl offer-ai            # 端口 8084（需配置 AI API Key）
 ```
 
 ### 5. 验证
@@ -114,49 +191,25 @@ mvn spring-boot:run -pl offer-application # 端口 8083
 curl -X POST http://localhost:8081/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"demo","password":"123456"}'
-
-# 获取 token → 调用各业务接口
 ```
 
-## 🔑 核心功能
-
-### 投递状态机
-
-```
-SAVED → APPLIED → ONLINE_ASSESSMENT → INTERVIEW → HR_INTERVIEW → OFFER
-  │         │            │              │             │             │
-  └─ WITHDRAWN ←─────────┴───── REJECTED ─────────────┘             │
-                                                                    │
-                                                            ACCEPTED / DECLINED
-```
-
-非法流转被拒绝（如 SAVED 不能直接跳到 OFFER），终止态（REJECTED/WITHDRAWN）不可再变更。
-
-### 跨服务数据组装
-
-```
-GET /api/applications → 返回：
-{
-  "companyId": 5,
-  "companyName": "字节跳动",    ← Feign 跨服务查询 offer-user
-  "positionId": 5,
-  "positionTitle": "后端开发工程师" ← Feign 跨服务查询 offer-user
-}
-```
+---
 
 ## 📈 项目路线图
 
-| 阶段 | 内容 | 状态 |
-|------|------|------|
-| Sprint 1 | 脚手架搭建 + 核心业务 CRUD | ✅ 完成 |
-| Sprint 2 | 投递状态机 + 面试/Offer 管理 | ✅ 完成 |
-| Sprint 3 | 跨服务 Feign 调用 | ✅ 完成 |
-| Sprint 4 | UI 赛博改造 + Pipeline 流水线 + 一键推进 | ✅ 完成 |
-| Sprint 5 | 单元测试 55 测例 + GitHub Actions CI | ✅ 完成 |
-| Sprint 6 | Redis 缓存 + Sentinel 熔断降级 | ✅ 完成 |
-| Sprint 7 | MinIO 文件存储 + RabbitMQ 消息队列 | ✅ 完成 |
-| Sprint 8 | offer-ai 智能助手微服务 | ✅ 完成 |
-| Sprint 9 | 后续功能开发 | 🚧 进行中 |
+| Sprint | 内容 | 状态 |
+|:------:|------|:----:|
+| Sprint 1 | 脚手架搭建（父 POM、Docker、Nacos、Gateway、Auth） | ✅ |
+| Sprint 2 | 用户 + 公司 + 岗位 CRUD（15 接口） | ✅ |
+| Sprint 3 | 投递 + 面试 + Offer + 状态机 + 自动填充 + Feign 跨服务 | ✅ |
+| Sprint 4 | Vue 3 前端 7 页全功能 + Pipeline + 一键推进 + 深色科技风 | ✅ |
+| Sprint 5 | 单元测试（55 测例）+ GitHub Actions CI + JaCoCo | ✅ |
+| Sprint 6 | Redis 缓存 + Sentinel 熔断降级 | ✅ |
+| Sprint 7 | MinIO 文件存储 + RabbitMQ 消息队列 | ✅ |
+| Sprint 8 | offer-ai 智能助手微服务 | ✅ |
+| Sprint 9 | 后续功能开发 | 🚧 |
+
+---
 
 ## 📚 文档索引
 
@@ -164,12 +217,6 @@ GET /api/applications → 返回：
 |------|------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 微服务架构设计 |
 | [API_SPEC.md](API_SPEC.md) | REST API 详细规范 |
-| [DATABASE.md](DATABASE.md) | 数据库设计（ER 图/索引/约束） |
-| [PROJECT.md](PROJECT.md) | 技术栈与依赖说明 |
-| [ROADMAP.md](ROADMAP.md) | 开发路线图 |
+| [DATABASE.md](DATABASE.md) | 数据库设计（表结构 + 索引 + 状态流转） |
+| [ROADMAP.md](ROADMAP.md) | 开发路线图（Sprint 排期） |
 | [CHANGELOG.md](CHANGELOG.md) | 更新日志 |
-
----
-
-> **个人项目 · 持续更新中**
-> 如有问题或建议，欢迎提交 Issue 或 PR。

@@ -8,6 +8,111 @@
 - 主键统一使用 `BIGINT` 自增 ID
 - 统一时间字段：`created_at` / `updated_at`（由 MyBatis-Plus 自动填充）
 
+---
+
+## ER 关系图
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              offer_auth                                     │
+│  ┌──────────────────────────────────────┐                                   │
+│  │          user_account                │                                   │
+│  │──────────────────────────────────────│                                   │
+│  │ PK  id            BIGINT            │────── 1:1 ──────┐                 │
+│  │     user_id       BIGINT  (UNIQUE)  │                 │                 │
+│  │     username      VARCHAR(50)       │                 │                 │
+│  │     password      VARCHAR(255)      │                 │                 │
+│  │     status        TINYINT           │                 │                 │
+│  │     last_login_at DATETIME          │                 ▼                 │
+│  └──────────────────────────────────────┘          offer_user              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              offer_user                                     │
+│  ┌──────────────────────────────────────┐  ┌──────────────────────────────┐ │
+│  │             user                     │  │          company            │ │
+│  │──────────────────────────────────────│  │──────────────────────────────│ │
+│  │ PK  id            BIGINT            │◀─┤ PK  id        BIGINT        │ │
+│  │     email         VARCHAR(100)      │  │     user_id   BIGINT        │ │
+│  │     phone         VARCHAR(20)       │  │     name      VARCHAR(100)  │ │
+│  │     avatar        VARCHAR(255)      │  │     industry  VARCHAR(50)   │ │
+│  │     name          VARCHAR(50)       │  │     website   VARCHAR(255)  │ │
+│  └──────────────────────────────────────┘  │     location  VARCHAR(100)  │ │
+│                                            │     size      VARCHAR(20)   │ │
+│                                            │     description TEXT        │ │
+│                                            └───────────┬──────────────────┘ │
+│                                                        │ 1:N               │
+│                                                        ▼                   │
+│                                            ┌──────────────────────────────┐ │
+│                                            │          position            │ │
+│                                            │──────────────────────────────│ │
+│                                            │ PK  id        BIGINT        │ │
+│                                            │     company_id BIGINT       │ │
+│                                            │     title     VARCHAR(100)  │ │
+│                                            │     salary_min INT          │ │
+│                                            │     salary_max INT          │ │
+│                                            │     city      VARCHAR(50)   │ │
+│                                            └──────────────────────────────┘ │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                           offer_application                                 │
+│  ┌──────────────────────────────────────┐                                   │
+│  │          application                 │                                   │
+│  │──────────────────────────────────────│                                   │
+│  │ PK  id            BIGINT            │── 1:N ──┐                         │
+│  │     user_id       BIGINT            │         │                         │
+│  │     company_id    BIGINT            │         │                         │
+│  │     position_id   BIGINT            │         │                         │
+│  │     status        VARCHAR(20)       │         │                         │
+│  │     source        VARCHAR(20)       │         │                         │
+│  │     applied_at    DATETIME          │         │                         │
+│  │     notes         TEXT              │         │                         │
+│  │     pipeline_config VARCHAR(100)    │         │                         │
+│  │     current_stage VARCHAR(50)       │         │                         │
+│  └──────────────────────────────────────┘         │                         │
+│                                                   │                         │
+│  ┌──────────────────────────────────────┐         │                         │
+│  │           interview                  │         │                         │
+│  │──────────────────────────────────────│         │                         │
+│  │ PK  id            BIGINT            │◀────────┘                         │
+│  │     application_id BIGINT           │                                   │
+│  │     round         VARCHAR(20)       │                                   │
+│  │     scheduled_at  DATETIME          │                                   │
+│  │     interview_type VARCHAR(20)      │                                   │
+│  │     location      VARCHAR(100)      │                                   │
+│  │     interviewer   VARCHAR(50)       │                                   │
+│  │     result        VARCHAR(20)       │                                   │
+│  │     feedback      TEXT              │                                   │
+│  └──────────────────────────────────────┘                                   │
+│                                                                             │
+│  ┌──────────────────────────────────────┐                                   │
+│  │             offer                    │                                   │
+│  │──────────────────────────────────────│                                   │
+│  │ PK  id            BIGINT            │◀────────┘ (0..1)                  │
+│  │     application_id BIGINT  (UNIQUE) │                                   │
+│  │     salary        VARCHAR(100)      │                                   │
+│  │     bonus         VARCHAR(100)      │                                   │
+│  │     stock         VARCHAR(100)      │                                   │
+│  │     benefits      TEXT              │                                   │
+│  │     deadline      DATE              │                                   │
+│  │     status        VARCHAR(20)       │                                   │
+│  │     remark        TEXT              │                                   │
+│  └──────────────────────────────────────┘                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 关系说明
+
+| 关系 | 类型 | 说明 |
+|------|:----:|------|
+| user_account → user | 1:1 | `user_account.user_id` = `user.id` |
+| user → company | 1:N | 一个用户可以添加多家公司 |
+| company → position | 1:N | 一家公司可以有多个岗位 |
+| user → application | 1:N | 一个用户可以有多次投递 |
+| company → application | 1:N | 冗余关系，便于统计 |
+| position → application | 1:N | 一个岗位可以被多人投递 |
+| application → interview | 1:N | 一次投递可以有多次面试 |
+| application → offer | 1:0..1 | 一次投递最多只有一个 Offer（`UNIQUE`） |
+
+---
+
 ## 数据库划分
 
 | 服务 | 数据库 | 包含表 |
@@ -15,6 +120,8 @@
 | offer-auth | offer_auth | user_account |
 | offer-user | offer_user | user, company, position |
 | offer-application | offer_application | application, interview, offer |
+
+---
 
 ## 表结构
 
@@ -33,7 +140,9 @@
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`uk_username(username)`, `idx_user_id(user_id)`
+**索引：** `uk_username(username)`、`idx_user_id(user_id)`、`uk_user_id(user_id)`
+
+---
 
 ### offer_user.user
 
@@ -42,10 +151,14 @@
 | id | BIGINT | PK | |
 | email | VARCHAR(100) | UNIQUE | |
 | phone | VARCHAR(20) | UNIQUE | |
-| avatar | VARCHAR(255) | | 头像 URL |
+| avatar | VARCHAR(255) | | 头像 URL（MinIO 预签名 URL） |
 | name | VARCHAR(50) | NOT NULL | |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
+
+**索引：** `uk_email(email)`、`uk_phone(phone)`
+
+---
 
 ### offer_user.company
 
@@ -62,7 +175,9 @@
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`idx_user_id(user_id)`
+**索引：** `idx_user_id(user_id)`
+
+---
 
 ### offer_user.position
 
@@ -83,7 +198,9 @@
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`idx_company_id(company_id)`
+**索引：** `idx_company_id(company_id)`、`idx_title_status(title, status)`（复合查询）
+
+---
 
 ### offer_application.application
 
@@ -97,12 +214,14 @@
 | source | VARCHAR(20) | | 投递渠道 |
 | applied_at | DATETIME | | 投递日期 |
 | notes | TEXT | | 备注 |
-| pipeline_config | VARCHAR(100) | | 可选阶段配置: ASSESSMENT,EXAM,INTERVIEW_2,INTERVIEW_3,INTERVIEW_4 |
-| current_stage | VARCHAR(50) | | 当前流水线阶段: APPLIED/ASSESSMENT/EXAM/INTERVIEW_1/…/OFFER |
+| pipeline_config | VARCHAR(100) | | 可选阶段配置: ASSESSMENT,EXAM,... |
+| current_stage | VARCHAR(50) | | 当前流水线阶段 |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`idx_user_id(user_id)`, `idx_status(status)`, `idx_company_id(company_id)`
+**索引：** `idx_user_id(user_id)`、`idx_status(status)`、`idx_company_id(company_id)`、`idx_user_status(user_id, status)`（用户按状态筛选）
+
+---
 
 ### offer_application.interview
 
@@ -110,62 +229,94 @@
 |------|------|------|------|
 | id | BIGINT | PK | |
 | application_id | BIGINT | NOT NULL, INDEX | 关联投递 |
-| round | VARCHAR(20) | NOT NULL | 面试轮次 |
+| round | VARCHAR(20) | NOT NULL | 面试轮次（FIRST/SECOND/THIRD/HR） |
 | scheduled_at | DATETIME | NOT NULL | 面试时间 |
-| interview_type | VARCHAR(20) | | 线上面/线下面 |
-| location | VARCHAR(100) | | |
+| interview_type | VARCHAR(20) | | ONLINE / OFFLINE |
+| location | VARCHAR(100) | | 面试地点/链接 |
 | interviewer | VARCHAR(50) | | |
-| result | VARCHAR(20) | | 待定/通过/未通过 |
+| result | VARCHAR(20) | | PENDING / PASSED / FAILED |
 | feedback | TEXT | | 面试反馈 |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`idx_application_id(application_id)`
+**索引：** `idx_application_id(application_id)`、`idx_app_round(application_id, round)`（唯一轮次）
+
+---
 
 ### offer_application.offer
 
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | id | BIGINT | PK | |
-| application_id | BIGINT | NOT NULL, UNIQUE, INDEX | 关联投递 |
-| salary | VARCHAR(100) | | 薪资描述 |
-| bonus | VARCHAR(100) | | 奖金/期权 |
-| stock | VARCHAR(100) | | 股票 |
+| application_id | BIGINT | NOT NULL, UNIQUE, INDEX | 关联投递（一个投递最多一个 Offer） |
+| salary | VARCHAR(100) | | 薪资描述（如 "25k × 15薪"） |
+| bonus | VARCHAR(100) | | 奖金/签字费 |
+| stock | VARCHAR(100) | | 股票/RSU |
 | benefits | TEXT | | 福利 |
 | deadline | DATE | | Offer 有效期 |
-| status | VARCHAR(20) | NOT NULL | 待接受/已接受/已拒绝 |
+| status | VARCHAR(20) | NOT NULL | PENDING / ACCEPTED / DECLINED |
 | remark | TEXT | | 备注 |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |
 
-索引：`idx_application_id(application_id)`
+**索引：** `idx_application_id(application_id)`（同时也是 UNIQUE）
+
+---
 
 ## 状态流转（核心逻辑）
 
+### Application 状态机
+
 ```
-SAVED ──→ APPLIED ──→ ONLINE_ASSESSMENT ──→ INTERVIEW ──→ HR_INTERVIEW ──→ OFFER
-                                                                              │
-                                    REJECTED ←───────────────────────────────┘
+SAVED ──→ APPLIED ──→ ONLINE_ASSESSMENT ──→ INTERVIEW ──→ HR_INTERVIEW ──→ OFFER ──→ ACCEPTED
+                                                                                        ↓
+                                    REJECTED ←───────────────────────────────────── DECLINED
                                     WITHDRAWN (任意状态均可撤回)
 ```
 
-- **SAVED：** 收藏岗位，未投递
-- **APPLIED：** 已投递
-- **ONLINE_ASSESSMENT：** 笔试/测评阶段
-- **INTERVIEW：** 技术面试阶段
-- **HR_INTERVIEW：** HR 面试阶段
-- **OFFER：** 已发 Offer
-- **REJECTED：** 被拒（从任何中间状态均可进入）
-- **WITHDRAWN：** 主动撤回（从任何状态均可进入）
+| 状态 | 含义 | 是否终止态 |
+|------|------|:----------:|
+| SAVED | 收藏岗位，未投递 | 否 |
+| APPLIED | 已投递 | 否 |
+| ONLINE_ASSESSMENT | 笔试/测评阶段 | 否 |
+| INTERVIEW | 技术面试阶段 | 否 |
+| HR_INTERVIEW | HR 面试阶段 | 否 |
+| OFFER | 已发 Offer | 否 |
+| ACCEPTED | 已接受 Offer | **是** |
+| DECLINED | 已拒绝 Offer | **是** |
+| REJECTED | 被拒 | **是** |
+| WITHDRAWN | 主动撤回 | **是** |
+
+> **关键规则：** 状态只能沿正向流动（SAVED → ... → OFFER），不能回退。终止态（ACCEPTED/DECLINED/REJECTED/WITHDRAWN）不可再变更。REJECTED 和 WITHDRAWN 可从任意非终止态进入。
+
+### Offer 状态机
+
+```
+PENDING ──→ ACCEPTED
+         └─→ DECLINED
+```
+
+| 状态 | 含义 | 是否终止态 |
+|------|------|:----------:|
+| PENDING | 待处理 | 否 |
+| ACCEPTED | 已接受 | **是** |
+| DECLINED | 已拒绝 | **是** |
+
+> ACCEPTED/DECLINED 不可逆转回 PENDING。
+
+---
 
 ## 跨库查询策略
 
-投递记录需要展示公司名和岗位名时，两种方案：
-1. **优先展示缓存数据：** 创建投递时冗余写入公司/岗位名称到 application 表
-2. **需完整信息时：** 通过 OpenFeign 调用 offer-user 接口查询
+投递记录需要展示公司名和岗位名时：
 
-> MVP 采用方案 1，减少跨服务调用，性能好。后续如果数据一致性要求更高再切方案 2。
+```
+ApplicationVO.companyName    ← Feign 调用 offer-user 内部接口
+ApplicationVO.positionTitle  ← Feign 调用 offer-user 内部接口
+                              ↓
+                          Redis 缓存（Cache-Aside 模式）
+                          过期时间 1h + 随机偏移防雪崩
+                          空值缓存防穿透
+```
 
-### 要点说明
-
-数据库按服务拆分隔离，不建外键。company_id 和 position_id 在 application 表冗余存储是为了方便统计时不用跨库 JOIN——这是故意的反范式设计，不是低级错误。
+> company_id 和 position_id 在 application 表冗余存储是为了方便统计时不用跨库 JOIN——这是故意的反范式设计，不是低级错误。

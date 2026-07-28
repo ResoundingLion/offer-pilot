@@ -71,6 +71,63 @@
 
 ---
 
+---
+
+## User API (offer-user)
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/users/me | 获取当前用户资料（自动创建兜底） |
+| PUT | /api/users/me | 更新当前用户资料（昵称/邮箱/手机/头像） |
+| GET | /api/users | 用户列表 |
+| GET | /api/users/{id} | 指定用户详情 |
+| POST | /api/users | 新增用户 |
+| PUT | /api/users | 更新用户 |
+| DELETE | /api/users/{id} | 删除用户 |
+
+### GET /api/users/me
+
+自动创建兜底：如果 user 记录不存在（老用户未初始化），自动创建并绑定默认头像。
+
+**Request Headers：**
+
+| Header | 说明 |
+|--------|------|
+| X-User-Id | 用户 ID（网关鉴权后注入） |
+| X-Username | 用户名（可选，自动创建时使用） |
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": {
+    "id": 1,
+    "name": "demo",
+    "email": "demo@example.com",
+    "phone": "138xxxx",
+    "avatar": "avatar/1/uuid.jpg",
+    "avatarUrl": "http://localhost:9000/offer-pilot/avatar/1/uuid.jpg?X-Amz-Signature=..."
+  },
+  "message": "success"
+}
+```
+
+### PUT /api/users/me
+
+**Request：**
+```json
+{
+  "name": "新名字",
+  "email": "new@example.com",
+  "phone": "13900112233",
+  "avatar": "avatar/1/uuid.jpg"
+}
+```
+
+> 只更新非空字段，传 null 的字段保持不变。
+
+---
+
 ## Company API (offer-user)
 
 | 方法 | 路径 | 说明 |
@@ -318,6 +375,67 @@
 
 ---
 
+---
+
+## File API (offer-user / MinIO)
+
+文件上传/下载服务，由 offer-user 模块提供，MinIO 对象存储在后端。
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/files/upload | 上传文件（头像/附件） |
+| GET | /api/files/download | 下载/预览文件 |
+
+> 文件展示（如头像）直接使用预签名 URL 直连 MinIO，不走网关，减少网关压力。
+
+### POST /api/files/upload
+
+上传文件到 MinIO，返回对象路径和预签名访问 URL。
+
+**Request：** `multipart/form-data`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| file | MultipartFile | 上传的文件 |
+
+**Request Headers：**
+
+| Header | 说明 |
+|--------|------|
+| X-User-Id | 用户 ID（用于隔离路径: `avatar/{userId}/{uuid}.ext`） |
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": {
+    "objectName": "avatar/1/a1b2c3d4.jpg",
+    "url": "http://localhost:9000/offer-pilot/avatar/1/a1b2c3d4.jpg?X-Amz-Signature=..."
+  },
+  "message": "success"
+}
+```
+
+**错误响应：**
+
+| code | message | 说明 |
+|------|---------|------|
+| 400 | 文件不能为空 | 上传空文件 |
+
+### GET /api/files/download
+
+根据 objectName 直接下载文件流。
+
+**Query 参数：**
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| path | String | upload 返回的 objectName |
+
+**响应：** 文件二进制流，Content-Type 根据扩展名自动推断。
+
+---
+
 ## AI API (offer-ai)
 
 | 方法 | 路径 | 说明 |
@@ -351,6 +469,61 @@
 
 > AI API Key 配置在 Nacos 配置中心（`offer-ai.yaml`），可切换不同模型或 API 提供商。
 > 目前使用 DeepSeek Anthropic 兼容接口（`deepseek-v4-flash` 模型）。
+
+---
+
+---
+
+## Internal API（Feign 内部接口）
+
+服务间跨服务调用使用的内部接口，不经过网关，不走 `Result` 包装，直接返回 DTO。
+
+### Company Internal
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/companies/{id} | 获取公司 DTO（Feign 调用） |
+
+**Response：** 直接返回 `CompanyDTO`（非 `Result` 包装）：
+```json
+{
+  "id": 5,
+  "name": "字节跳动",
+  "industry": "互联网",
+  "website": "https://bytedance.com",
+  "location": "北京"
+}
+```
+
+> 找不到时返回空 DTO（所有字段为 null），避免 Feign 反序列化异常。
+
+### Position Internal
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/positions/{id} | 获取岗位 DTO（Feign 调用） |
+
+**Response：** 直接返回 `PositionDTO`：
+```json
+{
+  "id": 10,
+  "companyId": 5,
+  "title": "后端开发工程师",
+  "city": "北京",
+  "salaryMin": 25,
+  "salaryMax": 50
+}
+```
+
+### User Internal
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /internal/users/{id} | 获取用户 DTO（Feign 调用） |
+
+**Response：** 直接返回 `UserDTO`。
+
+> Internal API 的 Feign 接口定义在 `offer-api` 模块，由 `CompanyClient` / `PositionClient` / `UserClient` 声明。调用端（offer-application）通过 OpenFeign + Redis 缓存 + Sentinel 降级调用。
 
 ---
 
