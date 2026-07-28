@@ -16,7 +16,8 @@ OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪
 - 🎯 **Pipeline 投递进度流水线** — Dashboard 可视化阶段灯，一眼看清全部投递状态
 - 🚀 **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
 - 🎨 **深色科技风 UI** — 粒子登录页、赛博卡片、扫描线、页面转场动画
-- 📦 **Docker 容器化** — MySQL/Redis/Nacos 一键部署
+- 📦 **Docker 容器化** — MySQL/Redis/Nacos/RabbitMQ/MinIO 一键部署
+- 🧪 **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，覆盖核心业务逻辑
 
 ## 🛠️ 技术栈
 
@@ -150,7 +151,7 @@ GET /api/applications → 返回：
 | Sprint 2 | 投递状态机 + 面试/Offer 管理 | ✅ 完成 |
 | Sprint 3 | 跨服务 Feign 调用 | ✅ 完成 |
 | Sprint 4 | UI 赛博改造 + Pipeline 流水线 + 一键推进 | ✅ 完成 |
-| Sprint 5 | 单元测试 + GitHub Actions CI | ✅ 完成 |
+| Sprint 5 | 单元测试 55 测例 + GitHub Actions CI | ✅ 完成 |
 | Sprint 6 | Redis 缓存 + Sentinel 熔断降级 | ✅ 完成 |
 | Sprint 7 | MinIO 文件存储 + RabbitMQ 消息队列 | ✅ 完成 |
 | Sprint 8 | 后续功能开发 | 🚧 进行中 |

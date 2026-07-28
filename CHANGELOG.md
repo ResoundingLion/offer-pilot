@@ -6,6 +6,13 @@
 
 ## [1.3.0-SNAPSHOT] — 2026-07-28
 
+### 🧪 单元测试扩充至 55 测例
+
+- **新增 OfferServiceImplTest（13 测例）**：CRUD 7 + 状态流转 6（PENDING→ACCEPTED/DECLINED 合法/非法/不存在/无效字符串）
+- **新增 CacheServiceTest（8 测例）**：缓存命中 2 + 未命中 2 + 空值防穿透 2 + evict 2
+- **修复 RabbitTemplate 编译报错**：`ApplicationServiceImplTest` 构造函数补传 RabbitTemplate
+- 合计 55 测例全绿通过
+
 ### 📨 RabbitMQ 消息队列
 
 - **Docker 容器**：docker-compose 新增 rabbitmq:3-management（5672 + 15672 端口）

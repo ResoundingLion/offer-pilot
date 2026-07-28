@@ -19,7 +19,7 @@
 
 | 站 | 内容 | 状态 |
 |----|------|------|
-| 第一站 | 单元测试（34 测例全绿）| ✅ |
+| 第一站 | 单元测试（55 测例全绿）| ✅ |
 | 第二站 | GitHub Actions CI + JaCoCo | ✅ |
 | 第三站 | Redis 缓存（Cache-Aside + 防雪崩/穿透）| ✅ |
 | 第四站 | Sentinel 熔断降级（Feign + FallbackFactory）| ✅ |

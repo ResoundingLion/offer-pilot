@@ -82,6 +82,7 @@
         <module>offer-auth</module>
         <module>offer-user</module>
         <module>offer-application</module>
+        <module>offer-ai</module>
     </modules>
 
     <build>
