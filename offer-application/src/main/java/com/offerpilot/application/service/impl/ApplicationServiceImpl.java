@@ -25,8 +25,12 @@ import com.offerpilot.application.service.OfferService;
 import com.offerpilot.application.vo.ApplicationVO;
 import com.offerpilot.application.vo.DashboardVO;
 import com.offerpilot.application.vo.PipelineVO;
+import com.offerpilot.application.config.RabbitMQConfig;
+import com.offerpilot.application.mq.ApplicationEvent;
 import com.offerpilot.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import static com.offerpilot.common.result.ResultCode.BAD_REQUEST;
 import com.offerpilot.common.result.ResultCode;
@@ -37,6 +41,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApplicationServiceImpl implements ApplicationService {
@@ -49,6 +54,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final CompanyClient companyClient;
     private final PositionClient positionClient;
     private final CacheService cacheService;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     public Application findById(Long id) {
@@ -267,6 +273,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application app = applicationMapper.selectById(id);
         if (app == null) return null;
 
+        // 保存变更前状态（用于 MQ 事件）
+        ApplicationStatus oldStatus = app.getStatus();
+
         // 所有权校验
         if (!app.getUserId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权操作此投递记录");
@@ -303,8 +312,11 @@ public class ApplicationServiceImpl implements ApplicationService {
             // 跨状态推进 → 校验流转
             Set<ApplicationStatus> allowed = ALLOWED_TRANSITIONS.get(currentStatus);
             if (allowed == null || !allowed.contains(targetStatus)) {
-                throw new BusinessException(BAD_REQUEST,
-                        String.format("不允许从 %s 变更为 %s", currentStatus, targetStatus));
+                // 如果标准状态机不允许，检查是否因 pipeline 跳过了中间可选阶段
+                if (!isTransitionAllowedByPipeline(app, currentStatus, targetStatus)) {
+                    throw new BusinessException(BAD_REQUEST,
+                            String.format("不允许从 %s 变更为 %s", currentStatus, targetStatus));
+                }
             }
             applicationMapper.update(null, new LambdaUpdateWrapper<Application>()
                     .eq(Application::getId, id)
@@ -385,8 +397,55 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         }
 
-        // 7. 返回完整 VO
-        return enrichVO(applicationMapper.selectById(id));
+        // 7. 组装 VO 并发送 MQ 事件
+        ApplicationVO vo = enrichVO(applicationMapper.selectById(id));
+        sendStatusChangeEvent(id, userId, oldStatus, targetStage, targetStatus);
+        return vo;
+    }
+
+    // ===== MQ 事件发送 =====
+
+    /**
+     * 发送投递状态变更事件到 RabbitMQ
+     * <p>
+     * 异常不影响主流程（MQ 宕机时业务照常推进）
+     */
+    private void sendStatusChangeEvent(Long applicationId, Long userId,
+                                       ApplicationStatus oldStatus, String currentStage,
+                                       ApplicationStatus newStatus) {
+        try {
+            ApplicationEvent event = ApplicationEvent.builder()
+                    .applicationId(applicationId)
+                    .oldStatus(oldStatus != null ? oldStatus.name() : null)
+                    .newStatus(newStatus != null ? newStatus.name() : null)
+                    .currentStage(currentStage)
+                    .userId(userId)
+                    .timestamp(LocalDateTime.now().toString())
+                    .build();
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.STATUS_ROUTING_KEY, event);
+        } catch (Exception e) {
+            log.warn("MQ 消息发送失败（不影响主流程）: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 检查 pipeline 配置是否允许跳过中间阶段直接推进
+     * <p>
+     * 用户创建投递时如果没勾选"测评"和"笔试"，
+     * 那么从 APPLIED 应该可以直接推到 INTERVIEW。
+     * 标准状态机不允许这种跳转，这里根据 pipeline_config 放行。
+     */
+    private boolean isTransitionAllowedByPipeline(Application app,
+                                                   ApplicationStatus current,
+                                                   ApplicationStatus target) {
+        // 当前只支持 APPLIED → INTERVIEW 的跳过（跳过测评/笔试）
+        if (current == ApplicationStatus.APPLIED && target == ApplicationStatus.INTERVIEW) {
+            Set<String> enabled = parsePipelineConfig(app);
+            // 只有两个可选阶段都没启用时才允许跳过
+            return !enabled.contains("ASSESSMENT") && !enabled.contains("EXAM");
+        }
+        // 后续可扩展其他跳规则
+        return false;
     }
 
     // ===== Pipeline 流水线 =====

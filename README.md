@@ -29,6 +29,8 @@ OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪
 | 数据库 | MySQL 8.0, Redis 7.x |
 | 服务调用 | OpenFeign + LoadBalancer |
 | 认证 | JWT + Spring Security |
+| 消息队列 | RabbitMQ (Topic Exchange + 状态变更事件) |
+| 对象存储 | MinIO (预签名 URL + 头像 OSS 上传) |
 | API 文档 | Knife4j (预留) |
 | 部署 | Docker Compose |
 
@@ -46,15 +48,15 @@ Client (浏览器 / Postman)
     ┌──────┼──────────┬──────────┐
     ▼      ▼          ▼          ▼
 ┌──────┐ ┌──────┐ ┌────────┐ ┌────────────┐
-│ Auth │ │ User │ │ Appl.  │ │ Notification│
-│:8081 │ │:8082 │ │:8083   │ │  (MVP后)   │
+│ Auth │ │ User │ │ Appl.  │ │   MinIO    │
+│:8081 │ │:8082 │ │:8083   │ │:9000/9001  │
 └──┬───┘ └──┬───┘ └───┬────┘ └────────────┘
    └───────┬┴─────────┘
            ▼
-    ┌──────────────┐
-    │ Nacos Server │ 注册中心 + 配置中心
-    │ :8848       │
-    └──────────────┘
+    ┌──────────────┐       ┌────────────────┐
+    │ Nacos Server │       │ RabbitMQ       │
+    │ :8848       │       │ :5672 / :15672  │
+    └──────────────┘       └────────────────┘
 ```
 
 ## 🗂️ 模块说明
@@ -149,7 +151,9 @@ GET /api/applications → 返回：
 | Sprint 3 | 跨服务 Feign 调用 | ✅ 完成 |
 | Sprint 4 | UI 赛博改造 + Pipeline 流水线 + 一键推进 | ✅ 完成 |
 | Sprint 5 | 单元测试 + GitHub Actions CI | ✅ 完成 |
-| Sprint 6 | Docker 容器化部署 + CI/CD | ⬜ 待开始 |
+| Sprint 6 | Redis 缓存 + Sentinel 熔断降级 | ✅ 完成 |
+| Sprint 7 | MinIO 文件存储 + RabbitMQ 消息队列 | ✅ 完成 |
+| Sprint 8 | 后续功能开发 | 🚧 进行中 |
 
 ## 📚 文档索引
 

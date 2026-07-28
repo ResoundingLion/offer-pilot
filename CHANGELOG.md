@@ -4,6 +4,25 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0-SNAPSHOT] — 2026-07-28
+
+### 📨 RabbitMQ 消息队列
+
+- **Docker 容器**：docker-compose 新增 rabbitmq:3-management（5672 + 15672 端口）
+- **依赖配置**：父 POM + offer-application 添加 spring-boot-starter-amqp
+- **新增配置类**：`RabbitMQConfig.java` — TopicExchange + Queue + Binding + Jackson2JsonMessageConverter
+- **新增消息体**：`ApplicationEvent.java` — 状态变更事件（applicationId/oldStatus/newStatus/currentStage/userId/timestamp）
+- **新增消费者**：`StatusChangeConsumer.java` — @RabbitListener 异步消费 + 日志打印
+- **修改 Service**：`ApplicationServiceImpl.java` — advance() 末尾发送 MQ 消息，try-catch 防阻断主流程，加 @Slf4j
+- **Nacos 配置**：配置中心发布 RabbitMQ 连接信息
+- **全链路联调验证通过**：控制台打印 `📨 [状态变更]` 消息
+
+### 🐛 修复
+
+- **跳过中间阶段 Bug**：未勾选测评/笔试时从 APPLIED 推进到 INTERVIEW 被状态机拦截，新增 `isTransitionAllowedByPipeline()` 放行逻辑
+
+---
+
 ## [1.2.0-SNAPSHOT] — 2026-07-27
 
 ### 📋 路线全面修订

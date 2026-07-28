@@ -30,6 +30,7 @@
 | Knife4j | 4.5.x | API 文档 |
 | Hutool | 5.8.x | 工具集 |
 | Redisson | 3.30+ | Redis 客户端 |
+| Spring Boot AMQP | 3.2.x | RabbitMQ 消息队列 |
 | Spring Cloud Gateway | 3.2.x | Gateway |
 | OpenFeign | 4.x | 声明式调用 |
 
@@ -44,8 +45,8 @@ offer-pilot (父工程)
  ├── offer-gateway       — 网关服务
  ├── offer-auth          — 认证服务
  ├── offer-user          — 用户/公司/岗位服务
- ├── offer-application   — 投递/面试/Offer 服务
- ├── offer-notification  — 通知服务（MVP 后）
+ ├── offer-application   — 投递/面试/Offer 服务（含 RabbitMQ 状态变更事件）
+ ├── offer-ai            — 智能助手（DeepSeek API，开发中）
  ├── docker-compose.yml   — 一键启动环境
  └── sql/                 — 数据库初始化脚本
 ```

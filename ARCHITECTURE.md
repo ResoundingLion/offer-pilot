@@ -16,16 +16,16 @@ Client (浏览器 / Postman)
     ┌──────────┼──────────────┐──────────┐
     ▼          ▼              ▼          ▼
 ┌────────┐ ┌────────┐ ┌────────────┐ ┌────────────┐
-│  Auth  │ │  User  │ │ Application│ │Notification│ ← MVP后做
-│ (:8081)│ │(:8082) │ │  (:8083)   │ │  (:8084)   │
+│  Auth  │ │  User  │ │ Application│ │   MinIO    │
+│ (:8081)│ │(:8082) │ │  (:8083)   │ │:9000/9001 │
 └───┬────┘ └───┬────┘ └──────┬─────┘ └────────────┘
     │          │              │
     └──────────┴──────┬───────┘
                       ▼
-             ┌────────────────┐
-             │  Nacos Server   │ 注册中心 + 配置中心
-             │  local:8848     │
-             └────────────────┘
+             ┌────────────────┐       ┌─────────────────┐
+             │  Nacos Server   │       │   RabbitMQ      │
+             │  local:8848     │       │   :5672/15672   │
+             └────────────────┘       └─────────────────┘
 ```
 
 ## 微服务划分（MVP 阶段）
@@ -47,9 +47,9 @@ offer-auth → offer-user  (校验用户状态)
 offer-application → offer-user  (获取岗位/公司信息)
 ```
 
-异步消息（MVP 阶段预留接口，暂不实现）：
+异步消息（已完成）：
 ```
-offer-application → RabbitMQ → offer-notification
+offer-application → RabbitMQ (Topic Exchange) → StatusChangeConsumer
 ```
 
 ## 注册中心 / 配置中心
