@@ -18,6 +18,7 @@ import com.offerpilot.application.mapper.InterviewMapper;
 import com.offerpilot.application.mapper.OfferMapper;
 import com.offerpilot.application.service.impl.ApplicationServiceImpl;
 import com.offerpilot.application.vo.ApplicationVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import com.offerpilot.application.vo.DashboardVO;
 import com.offerpilot.application.vo.PipelineVO;
 import com.offerpilot.common.exception.BusinessException;
@@ -55,6 +56,7 @@ class ApplicationServiceImplTest {
     @Mock private CompanyClient companyClient;
     @Mock private PositionClient positionClient;
     @Mock private CacheService cacheService;
+    @Mock private RabbitTemplate rabbitTemplate;
 
     private ApplicationServiceImpl service;
 
@@ -73,7 +75,8 @@ class ApplicationServiceImplTest {
     void setUp() {
         service = new ApplicationServiceImpl(
                 applicationMapper, interviewMapper, offerMapper,
-                interviewService, offerService, companyClient, positionClient, cacheService);
+                interviewService, offerService, companyClient, positionClient, cacheService,
+                rabbitTemplate);
 
         // 让 CacheService 的 mock 实际执行 loader（走 Feign 调用）
         lenient().when(cacheService.getOrLoad(anyString(), eq(String.class), any()))
