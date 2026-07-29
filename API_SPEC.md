@@ -468,6 +468,72 @@
 
 ---
 
+## Resume API (offer-user)
+
+简历管理，支持多版本（同一 `title` 下 `version` 递增）。
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/resumes | 当前用户全部简历 |
+| GET | /api/resumes/{id} | 简历详情 |
+| POST | /api/resumes | 创建新简历（自动算版本号） |
+| PUT | /api/resumes/{id} | 更新简历内容 |
+| DELETE | /api/resumes/{id} | 删除某个版本 |
+| PATCH | /api/resumes/{id}/new-version | 基于当前版本创建新版本 |
+| PATCH | /api/resumes/{id}/current | 设为当前使用版本 |
+
+### POST /api/resumes
+
+**Request：**
+```json
+{
+  "title": "Java后端简历",
+  "content": "skills: Java, Spring, MySQL",
+  "fileUrl": "resume/1/uuid.pdf"
+}
+```
+
+> `userId` 由网关从 JWT 解析后通过 `X-User-Id` 请求头注入，前端不需要传。`fileUrl` 可选，通过先上传文件到 MinIO 拿到 objectName 再填入。
+
+**Response：**
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "title": "Java后端简历",
+  "version": 1,
+  "content": "skills: Java, Spring, MySQL",
+  "fileUrl": "resume/1/uuid.pdf",
+  "summary": null,
+  "isCurrent": true,
+  "createdAt": "2026-07-29T10:21:11",
+  "updatedAt": "2026-07-29T10:21:11"
+}
+```
+
+### PUT /api/resumes/{id}
+
+只更新 `content`、`fileUrl`、`summary` 三个字段，`title` 和 `version` 不可修改。
+
+**Request：**
+```json
+{
+  "content": "updated content"
+}
+```
+
+### PATCH /api/resumes/{id}/new-version
+
+基于 id 对应版本的 `content`、`fileUrl`、`summary` 复制并创建新版本，版本号自动 +1。
+
+### PATCH /api/resumes/{id}/current
+
+将指定版本设为当前使用版本。同一用户同 title 下其他版本的 `isCurrent` 自动置为 `false`。
+
+> **多版本设计说明：** 同 title = 同一份简历的不同版本（如 "Java后端简历 v1"、"Java后端简历 v2"）。用 `title` 而非 `group_id` 分组更直观，减少用户理解成本。
+
+---
+
 ## Internal API（Feign 内部接口）
 
 服务间跨服务调用使用的内部接口，不经过网关，不走 `Result` 包装，直接返回 DTO。

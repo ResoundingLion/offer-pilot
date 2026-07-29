@@ -62,3 +62,21 @@ CREATE TABLE IF NOT EXISTS position
     INDEX idx_company_id (company_id),
     INDEX idx_status (status)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT ='岗位信息';
+
+-- 简历管理表（支持多版本）
+CREATE TABLE IF NOT EXISTS resume
+(
+    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
+    user_id     BIGINT       NOT NULL COMMENT '所属用户',
+    title       VARCHAR(100) NOT NULL COMMENT '简历标题，同标题=同简历不同版本',
+    version     INT          NOT NULL DEFAULT 1 COMMENT '版本号，同标题下自增',
+    content     TEXT         NULL     COMMENT '简历内容（结构化JSON，预留AI分析）',
+    file_url    VARCHAR(500) NULL     COMMENT '上传的简历文件URL（MinIO存储）',
+    summary     TEXT         NULL     COMMENT '简历摘要（AI生成，预留）',
+    is_current  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否当前使用版本',
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (id),
+    INDEX idx_user_id (user_id),
+    UNIQUE KEY uk_user_title_version (user_id, title, version)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT ='简历管理';

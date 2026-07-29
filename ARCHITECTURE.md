@@ -42,7 +42,7 @@ Client (浏览器 / Postman)
 |------|:----:|------|--------|------|
 | **offer-gateway** | 8080 | 路由转发、统一鉴权、跨域 | 无 | |
 | **offer-auth** | 8081 | 登录/注册、JWT 签发与校验 | offer_auth | 独立认证库 |
-| **offer-user** | 8082 | 用户管理、公司管理、岗位管理、文件上传 | offer_user | 含内部 Feign 接口 |
+| **offer-user** | 8082 | 用户管理、公司管理、岗位管理、**简历管理**、文件上传 | offer_user | 含内部 Feign 接口 |
 | **offer-application** | 8083 | 投递管理、面试管理、Offer 管理、Pipeline 流水线、Dashboard 统计 | offer_application | 核心业务服务 |
 | **offer-ai** | 8084 | 智能助手（DeepSeek API 对话） | 无 | 无数据库，纯 HTTP 调用 |
 
@@ -104,7 +104,7 @@ offer-application (advance) → TopicExchange → StatusChangeConsumer
 | 数据库 | 表 | 说明 |
 |--------|----|------|
 | offer_auth | user_account | 登录凭证，独立认证库 |
-| offer_user | user, company, position | 用户信息 + 公司 + 岗位 |
+| offer_user | user, company, position, resume | 用户信息 + 公司 + 岗位 + 简历 |
 | offer_application | application, interview, offer | 投递全流程 |
 
 - 每个微服务独享数据库，跨库不建外键

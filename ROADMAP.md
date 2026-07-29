@@ -16,40 +16,67 @@
 | Sprint 6 | 07-24 | Redis 缓存（Cache-Aside + 防雪崩/穿透）+ Sentinel 熔断降级 |
 | Sprint 7 | 07-27 | MinIO 文件存储 + 头像 OSS 上传 + RabbitMQ 消息队列（Topic Exchange + 状态变更事件） |
 | Sprint 8 | 07-28 | offer-ai 智能助手（DeepSeek API + 前端聊天页面） |
+| **Sprint 9** | **07-29** | **Resume 简历管理（多版本）— 后端 7 接口 + 前端 8 页面 + 选文件即上传 + PDF 预览** |
 
-## 🚧 后续路线
+## 🚧 后续路线（2026-07-29 修订）
 
-| Sprint | 内容 | 面试价值 |
-|:------:|------|:--------:|
-| Sprint 9 | Resume 简历管理：resume 表（支持多版本）+ CRUD API + 前端页面 | ⭐⭐⭐ |
-| Sprint 10 | 测试补漏：Controller 层 MockMVC 测试（CRUD + 异常路径覆盖） | ⭐⭐⭐ |
-| Sprint 11 | Knife4j + 全链路验证：API 文档配置 + 种子数据预填充 + 全链路测试 | ⭐⭐⭐ |
-| Sprint 12 | Arthas 性能调优：制造慢查询/N+1 场景 → trace 定位 → 修复 + 调优报告 | ⭐⭐⭐⭐ |
+基于项目评价+面试价值+实际使用需求重新排序，共 7 站。
 
-### Sprint 9 — Resume 简历管理
-- resume 表设计（支持多版本，`application_id` 关联投递）
-- CRUD API + 设置默认简历
+| 序 | 任务 | 面试价值 | 状态 |
+|:--:|------|:--------:|:----:|
+| 1️⃣ | **Resume 简历管理（多版本）** | 补领域模型，用户自用 | **✅ 已完成** |
+| 2️⃣ | **AI Agent 升级（JD分析/投递分析/面试助手）** | 🔥 最大差异化 | 待开始 |
+| 3️⃣ | **Notification 通知服务** | 圆 RabbitMQ 的故事 | 待开始 |
+| 4️⃣ | **Controller 测试补漏** | 测试分层覆盖 | 待开始 |
+| 5️⃣ | **Actuator + Loki 日志聚合** | 微服务运维故事 | 待开始 |
+| 6️⃣ | **Knife4j + 种子数据 + 全链路验证** | 收尾展示 | 待开始 |
+| 7️⃣ | **Arthas 性能调优** | 差异化亮点，有余力再执行 | 待开始 |
+
+### 1. Resume 简历管理 📄  ✅ 已完成（2026-07-29）
+
+> 全栈实现。后端 7 接口 + 前端简历管理页（按标题分组卡片、多版本展示、选文件即上传 MinIO、PDF 预览）。
+> 详见 [CHANGELOG.md](CHANGELOG.md) 1.5.0-SNAPSHOT。
+
+- resume 表设计（多版本：同一 title 下 version 递增，`user_id + title + version` 联合唯一）
+- CRUD + 创建新版本 + 切换当前使用版本
+- 内容存储结构化 JSON，预留 file_url（PDF/Word 上传 MinIO）
 - 前端简历页面（列表 + 编辑器）
-- 学完能答："简历版本怎么管理的？"
+- **学完能答**："简历多版本怎么设计的？为什么用 title 分组而非 group_id？"
 
-### Sprint 10 — 测试补漏
-- Controller 层 MockMVC 测试
-- 每个 Controller 的 CRUD + 异常路径覆盖
-- 学完能答："你们 Controller 层怎么测的？"
+### 2. AI Agent 升级 🤖
+从"聊天 API 代理"升级为真正的求职 Agent：
+- **JD 智能分析**：粘贴 JD → 关键词 + 难度 + 技能匹配度 + 学习建议
+- **AI 面试助手**：公司+岗位 → 高频面试题 + 八股重点 + 项目追问（需 Tool Calling）
+- **AI 投递分析**：扫描投递数据 → 拒信原因分析 + 优化方向（需 Resume 完成）
+- 关键技术：Tool Calling + 数据库查询 + 结构化输出
+- **学完能答**："怎么把 AI 嵌入业务？Tool Calling 怎么设计的？"
 
-### Sprint 11 — Knife4j + 全链路验证
-- Knife4j 配置 + API 文档分组（加依赖、配置类、网关放行）
-- 种子数据预填充 SQL
-- 全链路测试：启动所有服务验证接口完整性
-- 学完能答："你们项目 API 文档怎么管理的？"
+### 3. Notification 通知服务 📨
+- 新建 offer-notification 微服务（端口 8085）
+- 站内信 + 邮件通知
+- 状态变更 → MQ TopicExchange → 通知消费者 → 发送通知
+- **学完能答**："MQ 在你们项目里到底解决了什么实际问题？"
 
-### Sprint 12 — Arthas 性能调优
-- 制造慢查询 / N+1 场景（故意写一条无索引查询或循环查 DB）
-- 启动 Arthas attach 到运行中的服务
-- 用 trace 命令定位慢方法
-- 分析 SQL + 修复
-- 写调优报告放 README
-- 学完能答："线上性能问题怎么排查？"
+### 4. Controller 层测试 🧪
+- 每个 Controller 的 MockMVC 测试（CRUD + 异常路径 + 权限校验）
+- 与已有 55 个 Service 测例分层互补
+- **学完能答**："你们测试怎么分层的？Service 和 Controller 各测什么？"
+
+### 5. Actuator + 日志聚合 🔧
+- Spring Boot Actuator 健康检查 + 指标暴露
+- Loki + Promtail 聚合 5 个微服务日志
+- **学完能答**："微服务集群你怎么观测和维护的？"
+
+### 6. Knife4j + 种子数据 + 全链路验证 🔧
+- Knife4j API 文档配置 + 分组
+- 种子数据预填充 SQL（演示用）
+- 全链路启动验证接口完整性
+
+### 7. Arthas 性能调优 📊
+- 制造慢查询 / N+1 场景
+- Arthas trace 定位慢方法
+- 修复 + 调优报告
+- 优先级最低，有余力再执行
 
 ---
 

@@ -51,6 +51,19 @@
 │                                            │     salary_max INT          │ │
 │                                            │     city      VARCHAR(50)   │ │
 │                                            └──────────────────────────────┘ │
+│                                                                             │
+│  ┌──────────────────────────────────────┐                                   │
+│  │             resume                   │<── user_id 1:N                   │
+│  │──────────────────────────────────────│                                   │
+│  │ PK  id            BIGINT            │                                   │
+│  │     user_id       BIGINT            │                                   │
+│  │     title         VARCHAR(100)      │                                   │
+│  │     version       INT               │                                   │
+│  │     content       TEXT              │                                   │
+│  │     file_url      VARCHAR(500)      │                                   │
+│  │     summary       TEXT              │                                   │
+│  │     is_current    TINYINT(1)        │                                   │
+│  └──────────────────────────────────────┘                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                           offer_application                                 │
 │  ┌──────────────────────────────────────┐                                   │
@@ -106,6 +119,7 @@
 | user → company | 1:N | 一个用户可以添加多家公司 |
 | company → position | 1:N | 一家公司可以有多个岗位 |
 | user → application | 1:N | 一个用户可以有多次投递 |
+| user → resume | 1:N | 一个用户可以有多个简历版本 |
 | company → application | 1:N | 冗余关系，便于统计 |
 | position → application | 1:N | 一个岗位可以被多人投递 |
 | application → interview | 1:N | 一次投递可以有多次面试 |
@@ -118,7 +132,7 @@
 | 服务 | 数据库 | 包含表 |
 |------|--------|--------|
 | offer-auth | offer_auth | user_account |
-| offer-user | offer_user | user, company, position |
+| offer-user | offer_user | user, company, position, resume |
 | offer-application | offer_application | application, interview, offer |
 
 ---
@@ -199,6 +213,29 @@
 | updated_at | DATETIME | NOT NULL | |
 
 **索引：** `idx_company_id(company_id)`、`idx_title_status(title, status)`（复合查询）
+
+---
+
+### offer_user.resume
+
+简历管理表，支持多版本（同一 `title` 下 `version` 递增）。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK | |
+| user_id | BIGINT | NOT NULL, INDEX | 所属用户 |
+| title | VARCHAR(100) | NOT NULL | 简历标题，同标题 = 同一份简历的不同版本 |
+| version | INT | NOT NULL, DEFAULT 1 | 版本号，同一 title 下自增 |
+| content | TEXT | | 简历内容（结构化 JSON，预留 AI 分析） |
+| file_url | VARCHAR(500) | | 上传的简历文件 URL（MinIO 存储） |
+| summary | TEXT | | 简历摘要（AI 生成，预留） |
+| is_current | TINYINT(1) | NOT NULL, DEFAULT 0 | 是否当前使用版本（每用户每 title 仅一条为 1） |
+| created_at | DATETIME | NOT NULL | |
+| updated_at | DATETIME | NOT NULL | |
+
+**索引：** `idx_user_id(user_id)`、`uk_user_title_version(user_id, title, version)`（联合唯一，防止重复版本）
+
+> 为什么不直接用 `group_id` 分组？用 `title` 分组更直观——用户可以一眼看出"Java后端简历 v3"是什么。如果用 group_id，前端需要额外查标题映射表，增加复杂度。
 
 ---
 

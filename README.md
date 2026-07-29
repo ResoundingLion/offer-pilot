@@ -76,7 +76,7 @@ Client (浏览器 / Postman)
 | **offer-api** | Feign 接口定义（跨服务通信契约 + 共享 DTO） | — |
 | **offer-gateway** | 网关服务：路由转发、统一 JWT 鉴权、跨域配置 | — |
 | **offer-auth** | 认证服务：注册、登录、JWT 签发 | 2 |
-| **offer-user** | 用户/公司/岗位 CRUD + 文件上传/下载 + 内部 Feign 接口 | 15 |
+| **offer-user** | 用户/公司/岗位/简历 CRUD + 文件上传/下载 + 内部 Feign 接口 | 20+ |
 | **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 + RB 状态变更事件 | 16 |
 | **offer-ai** | 智能助手：DeepSeek API 对话 | 2 |
 
@@ -89,7 +89,7 @@ Client (浏览器 / Postman)
 - **Sentinel 熔断降级** — 50% 异常比例 / 10s 统计窗口 / 30s 熔断 + 友好降级文案
 - **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + try-catch 防阻断主流程
 - **MinIO 对象存储** — 预签名 URL 直连 + 默认头像自动绑定
-- **AI 智能助手** — DeepSeek API 集成 + 前端聊天页（消息流 + 打字动画）
+- **AI 求职 Agent（升级中）** — DeepSeek API 集成 + JD 智能分析 + 面试助手 + 投递分析
 - **Pipeline 流水线** — Dashboard 可视化阶段灯，一眼看清全部投递进度
 - **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
 - **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖
@@ -107,7 +107,7 @@ Client (浏览器 / Postman)
 | Application | user_id, company_id, position_id | 投递记录（状态机 + Pipeline） |
 | Interview | application_id | 面试记录（多轮次） |
 | Offer | application_id | Offer（薪资/奖金/股票 + 状态） |
-| Resume | user_id | 简历（多版本，规划中） |
+| Resume | user_id | 简历（多版本，`title + version` 联合唯一） |
 
 ### 状态流转
 
@@ -135,10 +135,16 @@ GET /api/applications → 返回：
 }
 ```
 
-### 智能 AI 对话
+### AI 求职 Agent（升级中）
+
+区别于简单的 AI 聊天，OfferPilot 的 AI 能力正在从"对话助手"升级为真正的"求职 Agent"：
+- **JD 智能分析** — 粘贴岗位描述，AI 输出技术关键词、难度评级、技能匹配度、学习建议
+- **AI 面试助手** — 根据公司+岗位，AI 生成高频面试题、八股重点、项目追问
+- **AI 投递分析** — 扫描投递数据，AI 分析拒信原因倾向、优化方向（需简历数据配合）
+
 ```
-POST /api/ai/chat → 调用 DeepSeek API
-{"message": "帮我分析这个 JD：精通 Java、Spring Cloud"}
+POST /api/ai/chat → JD 分析 / 面试准备 / 投递建议
+{"message": "帮我分析这个 JD：精通 Java、Spring Cloud..."}
 ```
 
 ### 文件上传
@@ -172,7 +178,7 @@ docker compose up -d
 
 ### 3. 执行数据库脚本
 
-执行 `sql/` 目录下建表脚本，创建 3 个库 7 张表。
+执行 `sql/` 目录下建表脚本，创建 3 个库 8 张表。
 
 ### 4. 启动微服务
 
@@ -199,15 +205,13 @@ curl -X POST http://localhost:8081/api/auth/register \
 
 | Sprint | 内容 | 状态 |
 |:------:|------|:----:|
-| Sprint 1 | 脚手架搭建（父 POM、Docker、Nacos、Gateway、Auth） | ✅ |
-| Sprint 2 | 用户 + 公司 + 岗位 CRUD（15 接口） | ✅ |
-| Sprint 3 | 投递 + 面试 + Offer + 状态机 + 自动填充 + Feign 跨服务 | ✅ |
-| Sprint 4 | Vue 3 前端 7 页全功能 + Pipeline + 一键推进 + 深色科技风 | ✅ |
-| Sprint 5 | 单元测试（55 测例）+ GitHub Actions CI + JaCoCo | ✅ |
-| Sprint 6 | Redis 缓存 + Sentinel 熔断降级 | ✅ |
-| Sprint 7 | MinIO 文件存储 + RabbitMQ 消息队列 | ✅ |
-| Sprint 8 | offer-ai 智能助手微服务 | ✅ |
-| Sprint 9 | 后续功能开发 | 🚧 |
+| Sprint 1-8 | 基础架构 → 全功能后端 + 前端 + 测试 + Redis/MQ/MinIO/AI | ✅ |
+| Sprint 9 | Resume 简历管理（多版本） | ✅ |
+| Sprint 10 | AI Agent 升级（JD分析/面试助手/投递分析） | 待开始 |
+| Sprint 11 | Notification 通知服务 + Controller 测试 | 待开始 |
+| Sprint 12 | 日志聚合 + Knife4j + Arthas 调优 | 待开始 |
+
+> 详细路线见 [ROADMAP.md](ROADMAP.md)。
 
 ---
 

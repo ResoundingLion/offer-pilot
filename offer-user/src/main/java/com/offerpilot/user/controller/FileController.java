@@ -30,12 +30,14 @@ public class FileController {
      *
      * @param file   上传的文件（Multipart）
      * @param userId 用户 ID（从请求头 X-User-Id 自动注入）
+     * @param type   上传类型：avatar（默认）| resume（简历附件）
      * @return objectName（MinIO 路径）和 url（预签名访问 URL）
      */
     @PostMapping("/upload")
     public Result<FileUploadVO> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(value = "type", defaultValue = "avatar") String type) {
 
         if (file.isEmpty()) {
             return Result.badRequest("文件不能为空");
@@ -48,8 +50,8 @@ public class FileController {
             ext = originalName.substring(originalName.lastIndexOf("."));
         }
 
-        // 生成唯一对象名：avatar/{userId}/{uuid}.ext
-        String objectName = String.format("avatar/%d/%s%s", userId, UUID.randomUUID(), ext);
+        // 生成唯一对象名：{type}/{userId}/{uuid}.ext
+        String objectName = String.format("%s/%d/%s%s", type, userId, UUID.randomUUID(), ext);
 
         // 上传到 MinIO
         minioService.upload(objectName, file);

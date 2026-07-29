@@ -2,7 +2,23 @@
 
 所有重要变更均记录在此文件。
 
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-cn/)。
+
+## [1.5.0-SNAPSHOT] — 2026-07-29
+
+### 📄 Resume 简历管理模块（多版本）
+
+- **新增 resume 表**：`offer_user` 库，`title + version` 联合唯一，`isCurrent` 标记当前版本
+- **后端 7 接口**：GET（列表/详情）、POST（创建）、PUT（编辑）、DELETE（删除）、PATCH（新版本/切换当前）
+- **多版本逻辑**：同 title 下 version 自增（CREATE-ON-WRITE），`setCurrent` 两步行事务保证一致性
+- **前端简历页面**：按标题分组卡片、创建/编辑弹窗、新版本一键复制、切换当前版本
+- **选文件即上传**：创建弹窗内选文件→立即上传 MinIO，填表单时间遮挡上传等待
+- **PDF 预览**：fetch + Authorization header 下载 → blob URL → `<embed>` 渲染，绕过 JWT 认证限制
+- **文件上传增强**：`FileController` 新增 `type` 参数（`avatar/` / `resume/` 路径隔离）
+- **Nacos 配置**：`offer-user.yaml` 新增 `spring.servlet.multipart`（max 10MB）；`offer-gateway.yaml` 新增 `/api/resumes/**` 路由
+- **文档同步**：ROADMAP.md / README.md / ARCHITECTURE.md / DATABASE.md / API_SPEC.md / 前端 README.md 全部更新
+
+---
 
 ## [1.4.0-SNAPSHOT] — 2026-07-28
 
