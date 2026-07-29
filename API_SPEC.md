@@ -441,7 +441,7 @@
 
 ### POST /api/ai/chat
 
-调用 DeepSeek API 进行 AI 对话。
+调用 LLM API 进行 AI 对话。
 
 **Request：**
 ```json
@@ -464,7 +464,7 @@
 - 500: AI API 调用失败（网络/Key 过期等，返回友好提示）
 
 > AI API Key 配置在 Nacos 配置中心（`offer-ai.yaml`），可切换不同模型或 API 提供商。
-> 目前使用 DeepSeek Anthropic 兼容接口（`deepseek-v4-flash` 模型）。
+> 使用 Anthropic 兼容接口，通过配置切换不同 LLM 提供商。
 
 ---
 
@@ -481,6 +481,7 @@
 | DELETE | /api/resumes/{id} | 删除某个版本 |
 | PATCH | /api/resumes/{id}/new-version | 基于当前版本创建新版本 |
 | PATCH | /api/resumes/{id}/current | 设为当前使用版本 |
+| POST | /api/resumes/{id}/extract-text | 从 PDF 提取文本到 content_text |
 
 ### POST /api/resumes
 
@@ -529,6 +530,17 @@
 ### PATCH /api/resumes/{id}/current
 
 将指定版本设为当前使用版本。同一用户同 title 下其他版本的 `isCurrent` 自动置为 `false`。
+
+### POST /api/resumes/{id}/extract-text
+
+从 MinIO 下载简历关联的 PDF 文件 → PDFBox 提取纯文本 → 写入 `content_text` 字段。
+
+适用于创建弹窗流程（上传时无 resumeId 自动提取），或手动触发重新提取。
+
+**请求参数：** 无请求体
+**响应：** `Result<Void>`
+**前置条件：** resume 必须有 file_url 且以 .pdf 结尾
+**异常处理：** 提取失败返回 500，不阻塞后续操作
 
 > **多版本设计说明：** 同 title = 同一份简历的不同版本（如 "Java后端简历 v1"、"Java后端简历 v2"）。用 `title` 而非 `group_id` 分组更直观，减少用户理解成本。
 

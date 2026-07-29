@@ -29,7 +29,7 @@ OfferPilot 是一款面向求职者的全流程管理平台，帮助用户追踪
 | 认证 | JWT + Spring Security | ✅ |
 | 消息队列 | RabbitMQ（Topic Exchange + 状态变更事件） | ✅ |
 | 对象存储 | MinIO（预签名 URL + 头像 OSS 上传） | ✅ |
-| AI | DeepSeek API（Anthropic 兼容接口） | ✅ |
+| AI | LLM API（Anthropic 兼容接口，可切换提供商） | ✅ |
 | API 文档 | Knife4j 4.5.x（待接入） | 📌 |
 | 测试 | JUnit 5 + Mockito + AssertJ | ✅ |
 | CI | GitHub Actions + JaCoCo 覆盖率 | ✅ |
@@ -78,7 +78,7 @@ Client (浏览器 / Postman)
 | **offer-auth** | 认证服务：注册、登录、JWT 签发 | 2 |
 | **offer-user** | 用户/公司/岗位/简历 CRUD + 文件上传/下载 + 内部 Feign 接口 | 20+ |
 | **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 + RB 状态变更事件 | 16 |
-| **offer-ai** | 智能助手：DeepSeek API 对话 | 2 |
+| **offer-ai** | 智能助手：LLM API 对话 | 2 |
 
 ---
 
@@ -89,7 +89,7 @@ Client (浏览器 / Postman)
 - **Sentinel 熔断降级** — 50% 异常比例 / 10s 统计窗口 / 30s 熔断 + 友好降级文案
 - **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + try-catch 防阻断主流程
 - **MinIO 对象存储** — 预签名 URL 直连 + 默认头像自动绑定
-- **AI 求职 Agent（升级中）** — DeepSeek API 集成 + JD 智能分析 + 面试助手 + 投递分析
+- **AI 求职 Agent（升级中）** — LLM API 集成 + JD 智能分析 + 面试助手 + 投递分析 + PDF 简历文本提取
 - **Pipeline 流水线** — Dashboard 可视化阶段灯，一眼看清全部投递进度
 - **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
 - **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖
@@ -151,6 +151,7 @@ POST /api/ai/chat → JD 分析 / 面试准备 / 投递建议
 ```
 POST /api/files/upload → MinIO 预签名 URL
 用户头像 → 选图 → 上传 MinIO → 自动填路径 → 保存
+简历 PDF → 上传 MinIO → PDFBox 自动提取文本 → 存入 resume.content_text → 供 AI 分析
 ```
 
 ---

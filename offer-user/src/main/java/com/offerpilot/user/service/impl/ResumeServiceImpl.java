@@ -101,6 +101,15 @@ public class ResumeServiceImpl implements ResumeService {
 
     @Override
     @Transactional
+    public void updateContentText(Long id, String contentText) {
+        resumeMapper.update(null, new LambdaUpdateWrapper<Resume>()
+                .eq(Resume::getId, id)
+                .set(Resume::getContentText, contentText)
+        );
+    }
+
+    @Override
+    @Transactional
     public Resume setCurrent(Long id) {
         Resume target = resumeMapper.selectById(id);
         if (target == null) {

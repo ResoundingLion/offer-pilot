@@ -1,14 +1,18 @@
 package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
+import com.offerpilot.common.result.ResultCode;
+import com.offerpilot.common.service.MinioService;
 import com.offerpilot.user.converter.ResumeConverter;
 import com.offerpilot.user.dto.ResumeCreateRequest;
 import com.offerpilot.user.dto.ResumeUpdateRequest;
 import com.offerpilot.user.entity.Resume;
+import com.offerpilot.user.service.PdfService;
 import com.offerpilot.user.service.ResumeService;
 import com.offerpilot.user.vo.ResumeVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,9 +30,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/resumes")
 @RequiredArgsConstructor
+@Slf4j
 public class ResumeController {
 
     private final ResumeService resumeService;
+    private final PdfService pdfService;
+    private final MinioService minioService;
 
     /**
      * GET /api/resumes —— 当前用户的全部简历
@@ -164,5 +171,40 @@ public class ResumeController {
             return Result.notFound();
         }
         return Result.success(ResumeConverter.convertToVO(current));
+    }
+
+    /**
+     * POST /api/resumes/{id}/extract-text —— 从 MinIO 下载简历 PDF 并提取文本
+     * <p>
+     * 适用于创建弹窗流程（上传时无 resumeId），或手动触发重新提取。
+     */
+    @PostMapping("/{id}/extract-text")
+    public Result<Void> extractText(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId) {
+        Resume resume = resumeService.findById(id);
+        if (resume == null) {
+            return Result.notFound();
+        }
+        if (!resume.getUserId().equals(userId)) {
+            return Result.forbidden();
+        }
+        if (resume.getFileUrl() == null || !resume.getFileUrl().toLowerCase().endsWith(".pdf")) {
+            return Result.badRequest("该简历没有关联的 PDF 文件");
+        }
+
+        try {
+            String text = pdfService.extractText(minioService.download(resume.getFileUrl()));
+            if (text != null) {
+                resumeService.updateContentText(id, text);
+                log.info("简历文本提取成功: resumeId={}, 文本长度={}", id, text.length());
+            } else {
+                log.warn("简历文本提取为空: resumeId={}", id);
+            }
+            return Result.success();
+        } catch (Exception e) {
+            log.error("简历文本提取失败: resumeId={}", id, e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "文本提取失败：" + e.getMessage());
+        }
     }
 }

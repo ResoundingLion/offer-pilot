@@ -2,6 +2,8 @@ package com.offerpilot.user.controller;
 
 import com.offerpilot.common.result.Result;
 import com.offerpilot.common.service.MinioService;
+import com.offerpilot.user.service.PdfService;
+import com.offerpilot.user.service.ResumeService;
 import com.offerpilot.user.vo.FileUploadVO;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,20 +26,24 @@ import java.util.UUID;
 public class FileController {
 
     private final MinioService minioService;
+    private final PdfService pdfService;
+    private final ResumeService resumeService;
 
     /**
      * POST /api/files/upload — 上传文件（头像、简历附件等）
      *
-     * @param file   上传的文件（Multipart）
-     * @param userId 用户 ID（从请求头 X-User-Id 自动注入）
-     * @param type   上传类型：avatar（默认）| resume（简历附件）
+     * @param file     上传的文件（Multipart）
+     * @param userId   用户 ID（从请求头 X-User-Id 自动注入）
+     * @param type     上传类型：avatar（默认）| resume（简历附件）
+     * @param resumeId 可选，简历 ID。type=resume 且携带此参数时，自动提取 PDF 文本并保存
      * @return objectName（MinIO 路径）和 url（预签名访问 URL）
      */
     @PostMapping("/upload")
     public Result<FileUploadVO> upload(
             @RequestParam("file") MultipartFile file,
             @RequestHeader("X-User-Id") Long userId,
-            @RequestParam(value = "type", defaultValue = "avatar") String type) {
+            @RequestParam(value = "type", defaultValue = "avatar") String type,
+            @RequestParam(value = "resumeId", required = false) Long resumeId) {
 
         if (file.isEmpty()) {
             return Result.badRequest("文件不能为空");
@@ -60,7 +66,30 @@ public class FileController {
         log.info("文件上传成功: userId={}, objectName={}, size={}, type={}",
                 userId, objectName, file.getSize(), file.getContentType());
 
+        // 如果是简历 PDF 且携带 resumeId，提取文本并保存
+        if ("resume".equals(type) && resumeId != null && objectName != null
+                && objectName.toLowerCase().endsWith(".pdf")) {
+            extractResumeText(resumeId, objectName);
+        }
+
         return Result.success(new FileUploadVO(objectName, url));
+    }
+
+    /**
+     * 从 MinIO 下载 PDF → 提取文本 → 写入 resume.content_text
+     */
+    private void extractResumeText(Long resumeId, String objectName) {
+        try {
+            String text = pdfService.extractText(minioService.download(objectName));
+            if (text != null) {
+                resumeService.updateContentText(resumeId, text);
+                log.info("简历文本提取完成: resumeId={}, 文本长度={}", resumeId, text.length());
+            } else {
+                log.warn("简历文本提取为空: resumeId={}", resumeId);
+            }
+        } catch (Exception e) {
+            log.warn("简历文本提取失败（不阻断上传）: resumeId={}, error={}", resumeId, e.getMessage());
+        }
     }
 
     /**

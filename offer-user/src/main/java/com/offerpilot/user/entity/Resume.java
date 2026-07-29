@@ -47,6 +47,11 @@ public class Resume {
     private String summary;
 
     /**
+     * 简历 PDF 提取的纯文本内容（用于 AI 分析）
+     */
+    private String contentText;
+
+    /**
      * 是否当前使用版本
      */
     private Boolean isCurrent;

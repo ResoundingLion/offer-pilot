@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS resume
     content     TEXT         NULL     COMMENT '简历内容（结构化JSON，预留AI分析）',
     file_url    VARCHAR(500) NULL     COMMENT '上传的简历文件URL（MinIO存储）',
     summary     TEXT         NULL     COMMENT '简历摘要（AI生成，预留）',
+    content_text MEDIUMTEXT  NULL     COMMENT 'PDF提取的纯文本（供AI分析）',
     is_current  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否当前使用版本',
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

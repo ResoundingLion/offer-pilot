@@ -62,6 +62,7 @@
 │  │     content       TEXT              │                                   │
 │  │     file_url      VARCHAR(500)      │                                   │
 │  │     summary       TEXT              │                                   │
+│  │     content_text  MEDIUMTEXT        │                                   │
 │  │     is_current    TINYINT(1)        │                                   │
 │  └──────────────────────────────────────┘                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -229,6 +230,7 @@
 | content | TEXT | | 简历内容（结构化 JSON，预留 AI 分析） |
 | file_url | VARCHAR(500) | | 上传的简历文件 URL（MinIO 存储） |
 | summary | TEXT | | 简历摘要（AI 生成，预留） |
+| content_text | MEDIUMTEXT | | PDF 提取的纯文本（上限 16MB，供 AI 分析） |
 | is_current | TINYINT(1) | NOT NULL, DEFAULT 0 | 是否当前使用版本（每用户每 title 仅一条为 1） |
 | created_at | DATETIME | NOT NULL | |
 | updated_at | DATETIME | NOT NULL | |

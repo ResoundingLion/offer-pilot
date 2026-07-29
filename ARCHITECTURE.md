@@ -42,9 +42,9 @@ Client (浏览器 / Postman)
 |------|:----:|------|--------|------|
 | **offer-gateway** | 8080 | 路由转发、统一鉴权、跨域 | 无 | |
 | **offer-auth** | 8081 | 登录/注册、JWT 签发与校验 | offer_auth | 独立认证库 |
-| **offer-user** | 8082 | 用户管理、公司管理、岗位管理、**简历管理**、文件上传 | offer_user | 含内部 Feign 接口 |
+| **offer-user** | 8082 | 用户管理、公司管理、岗位管理、**简历管理**、文件上传、**PDF 文本提取** | offer_user | 含内部 Feign 接口 + PdfService |
 | **offer-application** | 8083 | 投递管理、面试管理、Offer 管理、Pipeline 流水线、Dashboard 统计 | offer_application | 核心业务服务 |
-| **offer-ai** | 8084 | 智能助手（DeepSeek API 对话） | 无 | 无数据库，纯 HTTP 调用 |
+| **offer-ai** | 8084 | 智能助手（LLM API 对话） | 无 | 无数据库，纯 HTTP 调用 |
 
 > **为什么不做成 10 个微服务？** 一个人开发，拆分过细光环境配置就消耗大半时间。公司依赖用户，岗位依赖公司，投递/面试/Offer 属于同一条业务线——5 个（含 AI）在当前规模下恰到好处。
 
@@ -164,3 +164,5 @@ mvn spring-boot:run -pl offer-ai
 | Application 反范式冗余 | company_id / position_id 冗余 | 免跨库 JOIN，统计性能好 |
 | MinIO 不走网关 | 预签名 URL 直连 | 大文件传输不压网关 |
 | MQ 异常不阻断 | try-catch 兜底 | 保证主流程可用性 |
+| PDF 文本提取 | Apache PDFBox，上传时自动提取存库 | LLM 非多模态，需先提取文本才能分析 |
+| 提取异常不阻断上传 | try-catch 兜底，content_text=null | 保证上传主流程不受影响 |

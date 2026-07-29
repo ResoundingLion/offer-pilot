@@ -15,8 +15,8 @@
 | Sprint 5 | 07-23 | 单元测试（55 测例全绿）+ GitHub Actions CI + JaCoCo |
 | Sprint 6 | 07-24 | Redis 缓存（Cache-Aside + 防雪崩/穿透）+ Sentinel 熔断降级 |
 | Sprint 7 | 07-27 | MinIO 文件存储 + 头像 OSS 上传 + RabbitMQ 消息队列（Topic Exchange + 状态变更事件） |
-| Sprint 8 | 07-28 | offer-ai 智能助手（DeepSeek API + 前端聊天页面） |
-| **Sprint 9** | **07-29** | **Resume 简历管理（多版本）— 后端 7 接口 + 前端 8 页面 + 选文件即上传 + PDF 预览** |
+| Sprint 8 | 07-28 | offer-ai 智能助手（LLM API + 前端聊天页面） |
+| **Sprint 9** | **07-29** | **Resume 简历管理（多版本）+ PDF 文本提取 — 后端 8 接口 + 前端 8 页面 + 选文件即上传 + PDF 预览 + 文本提取** |
 
 ## 🚧 后续路线（2026-07-29 修订）
 
@@ -34,14 +34,15 @@
 
 ### 1. Resume 简历管理 📄  ✅ 已完成（2026-07-29）
 
-> 全栈实现。后端 7 接口 + 前端简历管理页（按标题分组卡片、多版本展示、选文件即上传 MinIO、PDF 预览）。
+> 全栈实现。后端 8 接口 + 前端简历管理页 + PDF 文本提取供 AI 分析。
 > 详见 [CHANGELOG.md](CHANGELOG.md) 1.5.0-SNAPSHOT。
 
 - resume 表设计（多版本：同一 title 下 version 递增，`user_id + title + version` 联合唯一）
 - CRUD + 创建新版本 + 切换当前使用版本
-- 内容存储结构化 JSON，预留 file_url（PDF/Word 上传 MinIO）
-- 前端简历页面（列表 + 编辑器）
-- **学完能答**："简历多版本怎么设计的？为什么用 title 分组而非 group_id？"
+- 内容存储结构化 JSON，file_url（PDF/Word 上传 MinIO）
+- PDF 文本提取：Apache PDFBox 提取简历纯文本 → `content_text` 字段（16MB 上限）
+- 两种提取方式：上传时自动提取（带 resumeId） + 手动接口 `POST /{id}/extract-text`
+- **学完能答**："LLM 不是多模态，怎么分析简历 PDF？"
 
 ### 2. AI Agent 升级 🤖
 从"聊天 API 代理"升级为真正的求职 Agent：

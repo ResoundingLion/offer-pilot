@@ -18,6 +18,15 @@
 - **Nacos 配置**：`offer-user.yaml` 新增 `spring.servlet.multipart`（max 10MB）；`offer-gateway.yaml` 新增 `/api/resumes/**` 路由
 - **文档同步**：ROADMAP.md / README.md / ARCHITECTURE.md / DATABASE.md / API_SPEC.md / 前端 README.md 全部更新
 
+### 📄 PDF 简历文本提取（供 AI 分析）
+
+- **PdfService**：Apache PDFBox 3.0.3，`InputStream → byte[] → PDDocument → 纯文本`，异常安全
+- **Resume Entity 新增字段**：`content_text MEDIUMTEXT`（上限 16MB），存 PDF 提取的纯文本内容
+- **自动提取**：`FileController.upload()` 新增可选参数 `resumeId`，type=resume + PDF 文件时上传完毕自动提取文本入库
+- **手动提取接口**：`POST /api/resumes/{id}/extract-text`，供创建弹窗流程补提取，或手动重新触发
+- **前端适配**：`uploadFile(file, 'resume', resumeId)` 上传时携带 resumeId 自动触发生成
+- **上传不阻断**：提取异常捕获，失败仅 `content_text=null`，上传和业务流程不受影响
+
 ---
 
 ## [1.4.0-SNAPSHOT] — 2026-07-28
@@ -28,7 +37,7 @@
 - **Gateway 路由**：`/api/ai/**` 转发到 offer-ai
 - **Nacos 配置**：`offer-ai.yaml`（端口 + AI API 参数：base-url/api-key/model）
 - **AiProperties.java**：`@ConfigurationProperties` 读取 AI 配置
-- **AiService.java**：RestTemplate 调 DeepSeek Anthropic 兼容接口（x-api-key 认证）
+- **AiService.java**：RestTemplate 调 LLM API（Anthropic 兼容接口，x-api-key 认证）
 - **AiController.java**：`POST /api/ai/chat` 对话接口
 - **前端 AI 助手页面**：聊天界面 + 建议问题 + 消息流 + 打字动画
 - **全链路验证通过**：直连 8084 + 走网关 + 带 Token 认证 + 真实 AI 回复
