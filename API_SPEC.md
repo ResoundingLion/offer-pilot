@@ -436,12 +436,16 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | /api/ai/chat | AI 对话 |
+| POST | /api/ai/chat | 旧版简单 AI 对话（保留兼容） |
+| **POST** | **/api/ai/agent** | **Agent 模式（ReAct 多轮 Tool Calling，统一入口）** |
+| **GET** | **/api/ai/conversations** | **获取当前用户对话列表** |
+| **GET** | **/api/ai/conversations/{id}/messages** | **获取对话消息历史** |
+| **DELETE** | **/api/ai/conversations/{id}** | **删除某个对话** |
 | GET | /api/ai/test | 服务存活检测（白名单，无需 Token） |
 
-### POST /api/ai/chat
+### POST /api/ai/chat（旧版）
 
-调用 LLM API 进行 AI 对话。
+调用 LLM API 进行简单 AI 对话（无工具调用）。
 
 **Request：**
 ```json
@@ -459,8 +463,92 @@
 }
 ```
 
+### POST /api/ai/agent（推荐）
+
+**Agent 入口** —— LLM 自主决策调用哪些工具获取数据，支持多轮 ReAct 循环。
+
+**Request：**
+```json
+{
+  "message": "看看我的求职投递情况，分析拒信原因和优化方向",
+  "conversationId": null
+}
+```
+
+> `conversationId` 为可选项。新对话不传或传 null；续聊时传上一次返回的 conversationId。
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": {
+    "conversationId": 1,
+    "reply": "## 投递分析\n\n### 总览\n..."
+  },
+  "message": "success"
+}
+```
+
+> reply 为 Markdown 格式，前端渲染为结构化文本。
+
+**Agent 工作流程：**
+```
+用户："看看我的求职情况"
+  → 第1轮：LLM 决定调 get_dashboard_stats → 拿到统计数据
+  → 第2轮：LLM 发现拒信多 → 调 get_applications → 拿到投递列表
+  → 第3轮：LLM 看到面试挂的多 → 调 get_interviews → 拿到面试反馈
+  → 最终：LLM 综合分析 → 返回结构化回复
+```
+
+**可用的工具（LLM 自主选择）：**
+
+| 工具名 | 获取数据 | 来源 |
+|--------|---------|------|
+| `get_active_resume` | 当前简历内容（含 contentText） | offer-user（Feign） |
+| `get_dashboard_stats` | 投递统计总览 | offer-application（Feign） |
+| `get_applications` | 全部投递记录列表 | offer-application（Feign） |
+| `get_interviews` | 某投递的面试记录 | offer-application（Feign） |
+| `get_offer` | 某投递的 Offer | offer-application（Feign） |
+
+### GET /api/ai/conversations
+
+获取当前用户的历史对话列表（按更新时间倒序）。
+
+**请求头：** `X-User-Id`（网关自动注入）
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": [
+    { "id": 1, "userId": 1, "title": "看看我的求职投递情况...", "createdAt": "...", "updatedAt": "..." }
+  ],
+  "message": "success"
+}
+```
+
+### GET /api/ai/conversations/{id}/messages
+
+获取指定对话的全部消息（按序号排列，用于前端加载历史）。
+
+**Response：**
+```json
+{
+  "code": 200,
+  "data": [
+    { "id": 1, "role": "USER", "content": "看看我的求职情况", "msgIndex": 1 },
+    { "id": 2, "role": "TOOL_USE", "toolName": "get_dashboard_stats", "msgIndex": 2 },
+    { "id": 3, "role": "TOOL_RESULT", "toolResult": "{\"total\":20,...}", "msgIndex": 3 },
+    { "id": 4, "role": "ASSISTANT", "content": "## 分析结果...", "msgIndex": 4 }
+  ],
+  "message": "success"
+}
+```
+
 **错误响应：**
-- 400: 消息为空
+- 400: 消息为空（agent 端）
+- 403: 对话不属于当前用户
+- 404: 对话不存在
 - 500: AI API 调用失败（网络/Key 过期等，返回友好提示）
 
 > AI API Key 配置在 Nacos 配置中心（`offer-ai.yaml`），可切换不同模型或 API 提供商。
@@ -595,7 +683,42 @@
 
 **Response：** 直接返回 `UserDTO`。
 
-> Internal API 的 Feign 接口定义在 `offer-api` 模块，由 `CompanyClient` / `PositionClient` / `UserClient` 声明。调用端（offer-application）通过 OpenFeign + Redis 缓存 + Sentinel 降级调用。
+### Resume Internal（2026-07-30 新增，供 AI Agent 调用）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/resumes/active | 获取用户当前使用的简历（含 contentText） |
+
+**Query：** `userId`
+
+**Response：** 直接返回 `ResumeDTO`（含 contentText 供 AI 做简历匹配分析）。
+
+### Application Internal（2026-07-30 新增，供 AI Agent 调用）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/applications | 获取用户全部投递记录（含状态/渠道/日期） |
+| GET | /internal/applications/dashboard/stats | 获取投递统计数据（趋势/来源分布） |
+
+**Query：** `userId`
+
+### Interview Internal（2026-07-30 新增，供 AI Agent 调用）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/interviews | 获取某投递的面试记录列表 |
+
+**Query：** `applicationId`
+
+### Offer Internal（2026-07-30 新增，供 AI Agent 调用）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /internal/offers | 获取某投递的 Offer 详情 |
+
+**Query：** `applicationId`
+
+> Internal API 的 Feign 接口定义在 `offer-api` 模块。原有的 `CompanyClient` / `PositionClient` / `UserClient` 供 offer-application 调用。2026-07-30 新增 `ResumeClient` / `ApplicationClient` / `InterviewClient` / `OfferClient` 供 offer-ai Agent 调用。所有 Feign 调用均配置 FallbackFactory 熔断降级。
 
 ---
 

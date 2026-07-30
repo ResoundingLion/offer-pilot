@@ -4,6 +4,45 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-cn/)。
 
+## [1.6.0-SNAPSHOT] — 2026-07-30
+
+### 🤖 AI Agent 升级（ReAct + Tool Calling）
+
+- **ReAct Agent 核心**：`AgentService.java` — for 循环多轮 Tool Calling（最多 5 轮），LLM 自主决策推理→行动→观察→再推理
+- **工具系统**：`ToolDefinitionProvider`（5 个工具定义）+ `ToolExecutor`（switch-case 路由 Feign 调用）
+- **工具清单**：`get_active_resume`（简历）、`get_dashboard_stats`（统计）、`get_applications`（投递列表）、`get_interviews`（面试记录）、`get_offer`（Offer）
+
+### 📦 offer-api 新增 Feign 接口
+
+- **4 个 Feign Client**：ResumeClient、ApplicationClient、InterviewClient、OfferClient（含 FallbackFactory）
+- **4 个共享 DTO**：ResumeDTO、ApplicationDTO、InterviewDTO、OfferDTO
+
+### 🔌 内部 Controller 新增
+
+- **offer-user**：`ResumeInternalController`（`/internal/resumes/active`）
+- **offer-application**：`ApplicationInternalController`、`InterviewInternalController`、`OfferInternalController`
+
+### 🗄️ 对话持久化
+
+- **数据库**：`offer_ai` 库 + `conversation` / `conversation_message` 2 张 MySQL 表
+- **实体**：Conversation、ConversationMessage + 对应 Mapper
+- **ConversationService**：建对话/保存消息/加载历史/删除对话
+- **Nacos offer-ai.yaml**：新增 datasource 配置 + `spring.main.allow-bean-definition-overriding: true`
+
+### 🎨 前端 Agent 界面
+
+- **双栏布局**：左侧历史对话列表（新建/切换/删除）+ 右侧聊天区
+- **Markdown 渲染**：`marked` 库渲染 LLM 返回的结构化分析结果
+- **三个快捷入口**：JD 分析/投递分析/面试助手，带引导 prompt
+- **历史续聊**：切换对话自动加载历史消息，LLM 保持上下文
+
+### 🐛 修复
+
+- **创建简历时 PDF 文本不自动提取**：`ResumeServiceImpl.create()` 插入后检测 fileUrl 是否为 PDF，自动从 MinIO 下载→PdfService 提取→写入 contentText，创建弹窗也生效
+- **JSONObject.toMap() 编译报错**：Hutool 5.8.32 的 JSONObject 无 toMap() 方法，改为直接强转 Map
+
+---
+
 ## [1.5.0-SNAPSHOT] — 2026-07-29
 
 ### 📄 Resume 简历管理模块（多版本）

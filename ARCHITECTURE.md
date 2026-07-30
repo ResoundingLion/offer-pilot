@@ -44,9 +44,9 @@ Client (浏览器 / Postman)
 | **offer-auth** | 8081 | 登录/注册、JWT 签发与校验 | offer_auth | 独立认证库 |
 | **offer-user** | 8082 | 用户管理、公司管理、岗位管理、**简历管理**、文件上传、**PDF 文本提取** | offer_user | 含内部 Feign 接口 + PdfService |
 | **offer-application** | 8083 | 投递管理、面试管理、Offer 管理、Pipeline 流水线、Dashboard 统计 | offer_application | 核心业务服务 |
-| **offer-ai** | 8084 | 智能助手（LLM API 对话） | 无 | 无数据库，纯 HTTP 调用 |
+| **offer-ai** | 8084 | **AI Agent（ReAct Tool Calling）+ 对话历史持久化** | **offer_ai** | 通过 Feign 跨服务查数据 |
 
-> **为什么不做成 10 个微服务？** 一个人开发，拆分过细光环境配置就消耗大半时间。公司依赖用户，岗位依赖公司，投递/面试/Offer 属于同一条业务线——5 个（含 AI）在当前规模下恰到好处。
+> **为什么不做成 10 个微服务？** 一个人开发，拆分过细光环境配置就消耗大半时间。公司依赖用户，岗位依赖公司，投递/面试/Offer 属于同一条业务线——5 个服务在当前规模下恰到好处。
 
 ---
 
@@ -57,10 +57,17 @@ Client (浏览器 / Postman)
 ```
 offer-application → offer-user    GET /internal/companies/{id}  ← 公司名
 offer-application → offer-user    GET /internal/positions/{id}  ← 岗位名
+
+# AI Agent 调用（2026-07-30 新增）
+offer-ai → offer-user            GET /internal/resumes/active  ← 当前简历（JD 匹配）
+offer-ai → offer-application     GET /internal/applications    ← 投递列表
+offer-ai → offer-application     GET /internal/applications/dashboard/stats ← 统计
+offer-ai → offer-application     GET /internal/interviews      ← 面试记录
+offer-ai → offer-application     GET /internal/offers          ← Offer
 ```
 
 - 调用结果走 Redis 缓存（Cache-Aside 模式），减少跨服务调用频率
-- Feign 配置 Sentinel 熔断降级，失败时返回友好文案
+- Feign 配置 Sentinel 熔断降级，失败时返回友好文案或 null（Agent 会处理空结果）
 
 ### 异步消息（RabbitMQ）
 
@@ -106,6 +113,7 @@ offer-application (advance) → TopicExchange → StatusChangeConsumer
 | offer_auth | user_account | 登录凭证，独立认证库 |
 | offer_user | user, company, position, resume | 用户信息 + 公司 + 岗位 + 简历 |
 | offer_application | application, interview, offer | 投递全流程 |
+| **offer_ai** | **conversation, conversation_message** | **AI Agent 对话历史（2026-07-30 新增）** |
 
 - 每个微服务独享数据库，跨库不建外键
 - 跨库查询通过 Feign 接口 + 缓存解决，不做跨库 JOIN

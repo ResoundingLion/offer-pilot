@@ -78,7 +78,7 @@ Client (浏览器 / Postman)
 | **offer-auth** | 认证服务：注册、登录、JWT 签发 | 2 |
 | **offer-user** | 用户/公司/岗位/简历 CRUD + 文件上传/下载 + 内部 Feign 接口 | 20+ |
 | **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 + RB 状态变更事件 | 16 |
-| **offer-ai** | 智能助手：LLM API 对话 | 2 |
+| **offer-ai** | **AI Agent（ReAct + Tool Calling + 对话持久化）** | **5 (chat + agent + conversations)** |
 
 ---
 
@@ -89,7 +89,7 @@ Client (浏览器 / Postman)
 - **Sentinel 熔断降级** — 50% 异常比例 / 10s 统计窗口 / 30s 熔断 + 友好降级文案
 - **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + try-catch 防阻断主流程
 - **MinIO 对象存储** — 预签名 URL 直连 + 默认头像自动绑定
-- **AI 求职 Agent（升级中）** — LLM API 集成 + JD 智能分析 + 面试助手 + 投递分析 + PDF 简历文本提取
+- **AI 求职 Agent** — ReAct 多轮 Tool Calling：JD 智能分析 / 投递分析 / 面试助手（2026-07-30）
 - **Pipeline 流水线** — Dashboard 可视化阶段灯，一眼看清全部投递进度
 - **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
 - **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖
@@ -108,6 +108,7 @@ Client (浏览器 / Postman)
 | Interview | application_id | 面试记录（多轮次） |
 | Offer | application_id | Offer（薪资/奖金/股票 + 状态） |
 | Resume | user_id | 简历（多版本，`title + version` 联合唯一） |
+| **Conversation** | **user_id** | **AI Agent 对话会话 + 消息历史** |
 
 ### 状态流转
 
@@ -135,16 +136,20 @@ GET /api/applications → 返回：
 }
 ```
 
-### AI 求职 Agent（升级中）
+### AI 求职 Agent（✅ 已完成 2026-07-30）
 
-区别于简单的 AI 聊天，OfferPilot 的 AI 能力正在从"对话助手"升级为真正的"求职 Agent"：
-- **JD 智能分析** — 粘贴岗位描述，AI 输出技术关键词、难度评级、技能匹配度、学习建议
-- **AI 面试助手** — 根据公司+岗位，AI 生成高频面试题、八股重点、项目追问
-- **AI 投递分析** — 扫描投递数据，AI 分析拒信原因倾向、优化方向（需简历数据配合）
+区别于简单的 AI 聊天，OfferPilot 的 AI 是真正的 **ReAct Agent**——LLM 自主决策调用工具获取数据、多步推理、综合分析：
+
+- **JD 智能分析** — 粘贴岗位描述 → Agent 自动获取简历 → 技能匹配度分析 → 学习建议
+- **AI 投递分析** — "看看我的求职情况" → Agent 多步推理：先查统计 → 拒信多深挖面试反馈 → 综合优化建议
+- **AI 面试助手** — 结合简历技能生成面试题和准备建议
 
 ```
-POST /api/ai/chat → JD 分析 / 面试准备 / 投递建议
+POST /api/ai/agent → JD 分析 / 面试准备 / 投递建议
 {"message": "帮我分析这个 JD：精通 Java、Spring Cloud..."}
+
+Agent 工作流：
+① 调 get_active_resume 拿简历 → ② 分析 JD 关键词 → ③ 技能匹配 → ④ 输出
 ```
 
 ### 文件上传

@@ -66,6 +66,28 @@
 │  │     is_current    TINYINT(1)        │                                   │
 │  └──────────────────────────────────────┘                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
+│                           offer_ai（2026-07-30 新增）                        │
+│  ┌──────────────────────────────────────┐                                   │
+│  │          conversation                │                                   │
+│  │──────────────────────────────────────│                                   │
+│  │ PK  id            BIGINT            │── 1:N ──┐                         │
+│  │     user_id       BIGINT            │         │                         │
+│  │     title         VARCHAR(200)      │         │                         │
+│  └──────────────────────────────────────┘         │                         │
+│                                                   │                         │
+│  ┌──────────────────────────────────────┐         │                         │
+│  │       conversation_message           │         │                         │
+│  │──────────────────────────────────────│         │                         │
+│  │ PK  id            BIGINT            │◀────────┘                         │
+│  │     conversation_id BIGINT          │                                   │
+│  │     role          VARCHAR(20)       │                                   │
+│  │     content       TEXT              │                                   │
+│  │     tool_name     VARCHAR(100)      │                                   │
+│  │     tool_args     TEXT              │                                   │
+│  │     tool_result   TEXT              │                                   │
+│  │     msg_index     INT               │                                   │
+│  └──────────────────────────────────────┘                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
 │                           offer_application                                 │
 │  ┌──────────────────────────────────────┐                                   │
 │  │          application                 │                                   │
@@ -121,10 +143,12 @@
 | company → position | 1:N | 一家公司可以有多个岗位 |
 | user → application | 1:N | 一个用户可以有多次投递 |
 | user → resume | 1:N | 一个用户可以有多个简历版本 |
+| **user → conversation** | **1:N** | **一个用户可多次对话（2026-07-30）** |
 | company → application | 1:N | 冗余关系，便于统计 |
 | position → application | 1:N | 一个岗位可以被多人投递 |
 | application → interview | 1:N | 一次投递可以有多次面试 |
 | application → offer | 1:0..1 | 一次投递最多只有一个 Offer（`UNIQUE`） |
+| **conversation → conversation_message** | **1:N** | **一次对话有多条消息** |
 
 ---
 
@@ -134,6 +158,7 @@
 |------|--------|--------|
 | offer-auth | offer_auth | user_account |
 | offer-user | offer_user | user, company, position, resume |
+| **offer-ai** | **offer_ai** | **conversation, conversation_message** |
 | offer-application | offer_application | application, interview, offer |
 
 ---
@@ -238,6 +263,43 @@
 **索引：** `idx_user_id(user_id)`、`uk_user_title_version(user_id, title, version)`（联合唯一，防止重复版本）
 
 > 为什么不直接用 `group_id` 分组？用 `title` 分组更直观——用户可以一眼看出"Java后端简历 v3"是什么。如果用 group_id，前端需要额外查标题映射表，增加复杂度。
+
+---
+
+### offer_ai.conversation
+
+AI Agent 对话会话表。每次用户与 Agent 的完整交互为一个对话，包含多条消息。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK | |
+| user_id | BIGINT | NOT NULL, INDEX | 所属用户 |
+| title | VARCHAR(200) | | 对话标题（取首条消息前 30 字） |
+| created_at | DATETIME | NOT NULL | |
+| updated_at | DATETIME | NOT NULL | |
+
+**索引：** `idx_user_id(user_id)`
+
+---
+
+### offer_ai.conversation_message
+
+对话消息，支持 USER / ASSISTANT / TOOL_USE / TOOL_RESULT 四种角色。
+TOOL_USE 和 TOOL_RESULT 存 LLM 工具调用的参数和结果。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK | |
+| conversation_id | BIGINT | NOT NULL, INDEX, FK | 所属对话 |
+| role | VARCHAR(20) | NOT NULL | USER / ASSISTANT / TOOL_USE / TOOL_RESULT |
+| content | TEXT | | 文本内容或 tool_use_id |
+| tool_name | VARCHAR(100) | | LLM 调用的工具名 |
+| tool_args | TEXT | | 工具参数 JSON |
+| tool_result | TEXT | | 工具执行结果 JSON |
+| msg_index | INT | NOT NULL | 消息序号 |
+| created_at | DATETIME | NOT NULL | |
+
+**索引：** `idx_conversation_id(conversation_id)`，外键 `fk_message_conversation` REFERENCES `conversation(id)`
 
 ---
 

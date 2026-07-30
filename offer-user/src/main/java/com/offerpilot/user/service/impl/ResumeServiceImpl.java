@@ -2,20 +2,26 @@ package com.offerpilot.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.offerpilot.common.service.MinioService;
 import com.offerpilot.user.entity.Resume;
 import com.offerpilot.user.mapper.ResumeMapper;
+import com.offerpilot.user.service.PdfService;
 import com.offerpilot.user.service.ResumeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeMapper resumeMapper;
+    private final MinioService minioService;
+    private final PdfService pdfService;
 
     @Override
     public Resume findById(Long id) {
@@ -53,7 +59,36 @@ public class ResumeServiceImpl implements ResumeService {
         }
 
         resumeMapper.insert(resume);
+
+        // 如果上传了 PDF，自动提取文本
+        autoExtractPdfText(resume);
+
         return resume;
+    }
+
+    /**
+     * 如果简历关联了 PDF 文件，自动提取文本并写入 contentText
+     */
+    private void autoExtractPdfText(Resume resume) {
+        String fileUrl = resume.getFileUrl();
+        if (fileUrl == null || !fileUrl.toLowerCase().endsWith(".pdf")) {
+            return;
+        }
+
+        try {
+            String text = pdfService.extractText(minioService.download(fileUrl));
+            if (text != null) {
+                resumeMapper.update(null, new LambdaUpdateWrapper<Resume>()
+                        .eq(Resume::getId, resume.getId())
+                        .set(Resume::getContentText, text)
+                );
+                log.info("简历创建时自动提取 PDF 文本: resumeId={}, 文本长度={}",
+                        resume.getId(), text.length());
+            }
+        } catch (Exception e) {
+            log.warn("简历创建时 PDF 文本提取失败（不阻断保存）: resumeId={}, error={}",
+                    resume.getId(), e.getMessage());
+        }
     }
 
     @Override
