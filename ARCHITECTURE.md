@@ -105,17 +105,33 @@ offer-application (advance) ──状态变更事件──▶ TopicExchange
 
 ---
 
-## 统一认证方案
+## 安全边界（Sprint 12 目标）
 
 ```
 请求 → Gateway → JwtAuthGlobalFilter 校验 Token
     → 无 Token / Token 过期 → 返回 401
-    → Token 有效 → 转发到目标服务（Header 携带 userId）
+    → Token 有效 → 清除客户端伪造的身份 Header
+    → 注入 JWT 中的 userId → 转发到目标服务
+    → 下游按 resourceId + userId 做资源授权
 ```
 
-- 使用 JWT（access_token），无状态认证
-- 服务间 Feign 调用通过内部接口（`/internal/**`）不携带 Token
-- 文件下载路径（`/api/files/**`）在网关放行
+- **认证与授权分离**：Gateway 负责确认“用户是谁”；各业务服务负责确认“该资源是否属于这个用户”。
+- **资源归属规则**：Company、Position、Resume、Application、Interview、Offer、Conversation、Notification 和 File 的读写均以当前 userId 为边界。按 ID 操作时必须使用 `resourceId + userId` 双条件，或先校验父资源归属。
+- **服务间调用**：`/internal/**` 不通过 Gateway 对外路由，部署时仅在内部网络开放。Feign 透传已经验证的用户上下文，下游仍必须做资源归属过滤，不能只相信 LLM 或调用方传入的资源 ID。
+- **文件边界**：下载只能访问当前用户目录；头像仅允许常见图片，简历仅允许 PDF，并校验大小、类型及 resumeId 归属。
+- **AI 输出边界**：LLM 返回的 Markdown 属于不可信内容，前端必须在 `v-html` 渲染前使用 DOMPurify 净化。
+
+> **状态说明：** 本节描述 Sprint 12 的目标边界，当前代码仍有部分 Controller、文件接口和 Agent 工具未完成上述归属校验，实施进度以 ROADMAP.md 为准。
+
+### 有意不做的生产级能力
+
+| 能力 | 当前决策 | 原因 |
+|------|----------|------|
+| Keycloak / 完整 OAuth2 授权服务器 | 不引入 | 当前登录与单一用户角色不需要独立身份平台 |
+| RBAC / ABAC 权限中心 | 不引入 | 当前只有资源所有者模型，`resourceId + userId` 足够表达 |
+| mTLS / 短期 Service JWT | 记录为技术债 | 个人项目先依靠内部网络隔离和下游资源校验；生产化时再加强服务身份 |
+| WAF / 病毒扫描 | 记录为技术债 | 当前采用类型、大小、magic byte 和内容净化等低成本防护 |
+| 全量安全审计平台 | 不引入 | 用关键授权回归测试证明边界，避免为了技术栈而过度建设 |
 
 ---
 
@@ -189,3 +205,6 @@ mvn spring-boot:run -pl offer-notification
 | MQ 异常不阻断 | try-catch 兜底 | 保证主流程可用性 |
 | PDF 文本提取 | Apache PDFBox，上传时自动提取存库 | LLM 非多模态，需先提取文本才能分析 |
 | 提取异常不阻断上传 | try-catch 兜底，content_text=null | 保证上传主流程不受影响 |
+| 资源级授权 | `resourceId + userId` 双条件 | 防止登录用户跨账号访问或修改个人数据 |
+| 内部接口信任边界 | 内部网络 + 用户上下文透传 + 下游归属校验 | 服务身份和用户资源授权必须分开处理 |
+| 安全建设范围 | 最小可信闭环 | 秋招学习项目优先解决真实越权，不堆生产级安全平台 |
