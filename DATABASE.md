@@ -160,6 +160,7 @@
 | offer-user | offer_user | user, company, position, resume |
 | **offer-ai** | **offer_ai** | **conversation, conversation_message** |
 | offer-application | offer_application | application, interview, offer |
+| **offer-notification** | **offer_notification** | **notification** |
 
 ---
 
@@ -300,6 +301,25 @@ TOOL_USE 和 TOOL_RESULT 存 LLM 工具调用的参数和结果。
 | created_at | DATETIME | NOT NULL | |
 
 **索引：** `idx_conversation_id(conversation_id)`，外键 `fk_message_conversation` REFERENCES `conversation(id)`
+
+---
+
+### offer_notification.notification
+
+站内通知表（2026-07-31 新增）。由投递状态变更事件（RabbitMQ）驱动生成，用户在顶栏铃铛查看。
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK | |
+| user_id | BIGINT | NOT NULL, INDEX | 所属用户 |
+| type | VARCHAR(30) | NOT NULL | 通知类型：STATUS_CHANGE |
+| title | VARCHAR(100) | NOT NULL | 标题，如「投递成功」 |
+| content | VARCHAR(500) | NOT NULL | 内容文案 |
+| is_read | TINYINT(1) | NOT NULL, DEFAULT 0 | 0 未读 / 1 已读 |
+| created_at | DATETIME | NOT NULL | |
+| updated_at | DATETIME | NOT NULL | |
+
+**索引：** `idx_user_read(user_id, is_read)`（未读数查询）、`idx_user_created(user_id, created_at)`（列表排序）
 
 ---
 

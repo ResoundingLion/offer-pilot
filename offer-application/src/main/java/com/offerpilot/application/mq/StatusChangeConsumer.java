@@ -1,18 +1,18 @@
 package com.offerpilot.application.mq;
 
+import com.offerpilot.api.event.ApplicationEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import static com.offerpilot.application.config.RabbitMQConfig.STATUS_QUEUE;
+import static com.offerpilot.api.mq.MqConstants.STATUS_QUEUE;
 
 /**
- * 投递状态变更事件消费者
+ * 投递状态变更事件消费者（offer-application 侧）
  * <p>
- * 监听 {@link RabbitMQConfig#STATUS_QUEUE}，异步处理状态变更。
- * 当前行为：打印日志。
+ * 监听 {@link com.offerpilot.api.mq.MqConstants#STATUS_QUEUE}，异步处理状态变更。
+ * 当前行为：打印日志（消息同时被 offer-notification 消费，生成站内信 + 邮件通知）。
  * 后续可扩展：
- *   - 发送站内信 / 邮件通知
  *   - 记录操作审计日志
  *   - 触发 AI 智能分析
  */

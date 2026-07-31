@@ -4,6 +4,22 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-cn/)。
 
+## [1.7.0-SNAPSHOT] — 2026-07-31
+
+### 📨 Notification 通知服务
+
+- **新增 offer-notification 微服务**（端口 8085）：消费投递状态变更事件 → 生成站内信 + 发邮件，顶栏铃铛查看
+- **新增 offer_notification 库 + notification 表**：站内信持久化，`idx_user_read` / `idx_user_created` 索引
+- **跨服务事件共享**：`ApplicationEvent` 从 offer-application 搬到公共模块 offer-api（新增 companyName / positionTitle），新增 `MqConstants` 统一交换机/队列/路由键
+- **消费链路**：`NotificationConsumer`（@RabbitListener）→ `NotificationMessageBuilder`（按状态生成文案）→ `NotificationServiceImpl`（落库）→ `MailService`（日志模拟发邮件，预留 SMTP 配置）
+- **4 个 REST 接口**：`GET /api/notifications`（列表）、`GET /unread-count`（未读数）、`PUT /{id}/read`（单条已读）、`PUT /read-all`（全部已读）
+- **前端顶栏铃铛**：未读红点数字 + 下拉通知列表 + 全部已读（layout.vue + notification.js）
+- **Nacos 配置**：新增 `offer-notification.yaml`（datasource + rabbitmq + 邮件预留）；`offer-gateway.yaml` 新增 `/api/notifications/**` 路由
+- **22 个新测例**：NotificationServiceImplTest（8）+ NotificationMessageBuilderTest（11）+ NotificationConsumerTest（3），总 77 测例全绿
+- **文档同步**：README / ARCHITECTURE / DATABASE / ROADMAP 全部更新
+
+---
+
 ## [1.6.0-SNAPSHOT] — 2026-07-30
 
 ### 🤖 AI Agent 升级（ReAct + Tool Calling）

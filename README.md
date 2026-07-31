@@ -79,20 +79,22 @@ Client (浏览器 / Postman)
 | **offer-user** | 用户/公司/岗位/简历 CRUD + 文件上传/下载 + 内部 Feign 接口 | 20+ |
 | **offer-application** | 投递/面试/Offer 全流程管理 + Pipeline 流水线 + 一键推进 + RB 状态变更事件 | 16 |
 | **offer-ai** | **AI Agent（ReAct + Tool Calling + 对话持久化）** | **5 (chat + agent + conversations)** |
+| **offer-notification** | **通知服务：MQ 消费状态变更 → 站内信 + 邮件 + 顶栏铃铛** | **4 (list + unread-count + read + read-all)** |
 
 ---
 
 ## 🚀 项目亮点
 
-- **微服务架构** — 5 个独立微服务，Nacos 注册发现 + 配置中心，Gateway 统一网关
+- **微服务架构** — 6 个独立微服务，Nacos 注册发现 + 配置中心，Gateway 统一网关
 - **Redis 缓存** — Cache-Aside 模式 + 随机 TTL 防雪崩 + 空值缓存防穿透
 - **Sentinel 熔断降级** — 50% 异常比例 / 10s 统计窗口 / 30s 熔断 + 友好降级文案
-- **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + try-catch 防阻断主流程
+- **RabbitMQ 异步解耦** — Topic Exchange + 投递状态变更事件 + **通知服务独立消费落库**，主流程零感知（2026-07-31）
+- **通知服务** — MQ 驱动站内信 + 邮件（日志模拟），顶栏铃铛未读红点 + 全部已读（2026-07-31）
 - **MinIO 对象存储** — 预签名 URL 直连 + 默认头像自动绑定
 - **AI 求职 Agent** — ReAct 多轮 Tool Calling：JD 智能分析 / 投递分析 / 面试助手（2026-07-30）
 - **Pipeline 流水线** — Dashboard 可视化阶段灯，一眼看清全部投递进度
 - **一键推进** — 一个弹窗同时完成状态变更 + 面试/Offer 记录创建
-- **55 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖
+- **77 单元测试全绿** — Mockito + JUnit 5 + AssertJ，Service 层全覆盖（55 + 通知服务 22）
 - **GitHub Actions CI** — push 自动编译 + 跑测试 + JaCoCo 覆盖率报告
 
 ---
@@ -194,6 +196,7 @@ mvn spring-boot:run -pl offer-auth          # 端口 8081
 mvn spring-boot:run -pl offer-user          # 端口 8082
 mvn spring-boot:run -pl offer-application   # 端口 8083
 mvn spring-boot:run -pl offer-ai            # 端口 8084（需配置 AI API Key）
+mvn spring-boot:run -pl offer-notification  # 端口 8085（消费 MQ 状态变更 → 通知）
 ```
 
 ### 5. 验证
@@ -213,9 +216,9 @@ curl -X POST http://localhost:8081/api/auth/register \
 |:------:|------|:----:|
 | Sprint 1-8 | 基础架构 → 全功能后端 + 前端 + 测试 + Redis/MQ/MinIO/AI | ✅ |
 | Sprint 9 | Resume 简历管理（多版本） | ✅ |
-| Sprint 10 | AI Agent 升级（JD分析/面试助手/投递分析） | 待开始 |
-| Sprint 11 | Notification 通知服务 + Controller 测试 | 待开始 |
-| Sprint 12 | 日志聚合 + Knife4j + Arthas 调优 | 待开始 |
+| Sprint 10 | AI Agent 升级（JD分析/面试助手/投递分析） | ✅ |
+| Sprint 11 | Notification 通知服务（MQ 站内信 + 邮件 + 顶栏铃铛） | ✅ |
+| Sprint 12 | Controller 测试 + 日志聚合 + Knife4j + Arthas 调优 | 待开始 |
 
 > 详细路线见 [ROADMAP.md](ROADMAP.md)。
 

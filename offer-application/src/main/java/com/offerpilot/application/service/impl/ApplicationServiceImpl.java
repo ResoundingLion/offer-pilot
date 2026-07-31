@@ -6,6 +6,8 @@ import com.offerpilot.api.client.CompanyClient;
 import com.offerpilot.api.client.PositionClient;
 import com.offerpilot.api.dto.CompanyDTO;
 import com.offerpilot.api.dto.PositionDTO;
+import com.offerpilot.api.event.ApplicationEvent;
+import com.offerpilot.api.mq.MqConstants;
 import com.offerpilot.application.converter.ApplicationConverter;
 import com.offerpilot.application.dto.AdvanceRequest;
 import com.offerpilot.application.entity.Application;
@@ -25,8 +27,6 @@ import com.offerpilot.application.service.OfferService;
 import com.offerpilot.application.vo.ApplicationVO;
 import com.offerpilot.application.vo.DashboardVO;
 import com.offerpilot.application.vo.PipelineVO;
-import com.offerpilot.application.config.RabbitMQConfig;
-import com.offerpilot.application.mq.ApplicationEvent;
 import com.offerpilot.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -399,7 +399,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // 7. 组装 VO 并发送 MQ 事件
         ApplicationVO vo = enrichVO(applicationMapper.selectById(id));
-        sendStatusChangeEvent(id, userId, oldStatus, targetStage, targetStatus);
+        sendStatusChangeEvent(id, userId, oldStatus, targetStage, targetStatus,
+                vo != null ? vo.getCompanyName() : null,
+                vo != null ? vo.getPositionTitle() : null);
         return vo;
     }
 
@@ -408,11 +410,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     /**
      * 发送投递状态变更事件到 RabbitMQ
      * <p>
-     * 异常不影响主流程（MQ 宕机时业务照常推进）
+     * 异常不影响主流程（MQ 宕机时业务照常推进）。
+     * 携带公司名/岗位名，通知服务无需再跨服务查询即可生成通知文案。
      */
     private void sendStatusChangeEvent(Long applicationId, Long userId,
                                        ApplicationStatus oldStatus, String currentStage,
-                                       ApplicationStatus newStatus) {
+                                       ApplicationStatus newStatus,
+                                       String companyName, String positionTitle) {
         try {
             ApplicationEvent event = ApplicationEvent.builder()
                     .applicationId(applicationId)
@@ -421,8 +425,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                     .currentStage(currentStage)
                     .userId(userId)
                     .timestamp(LocalDateTime.now().toString())
+                    .companyName(companyName)
+                    .positionTitle(positionTitle)
                     .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.STATUS_ROUTING_KEY, event);
+            rabbitTemplate.convertAndSend(MqConstants.EXCHANGE, MqConstants.STATUS_ROUTING_KEY, event);
         } catch (Exception e) {
             log.warn("MQ 消息发送失败（不影响主流程）: {}", e.getMessage());
         }

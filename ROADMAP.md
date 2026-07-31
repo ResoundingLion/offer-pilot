@@ -18,6 +18,7 @@
 | Sprint 8 | 07-28 | offer-ai 智能助手（LLM API + 前端聊天页面） |
 | Sprint 9 | 07-29 | Resume 简历管理（多版本）+ PDF 文本提取 — 后端 8 接口 + 前端 + 上传即提取 |
 | **Sprint 10** | **07-30** | **AI Agent 升级 —— ReAct + Tool Calling + Feign 跨服务数据查询 + 对话持久化 MySQL + 前端双栏 Agent 界面** |
+| **Sprint 11** | **07-31** | **Notification 通知服务 —— MQ 状态变更 → 独立微服务消费 → 站内信 + 邮件 + 顶栏铃铛（22 新测例，总 77 全绿）** |
 
 ## 🚧 后续路线（2026-07-30 修订）
 
@@ -27,7 +28,7 @@
 |:--:|------|:--------:|:----:|
 | 1️⃣ | Resume 简历管理（多版本） | 补领域模型，用户自用 | **✅ 已完成** |
 | 2️⃣ | **AI Agent 升级（JD分析/投递分析/面试助手）** | 🔥 最大差异化 | **✅ 已完成** |
-| 3️⃣ | **Notification 通知服务** | 圆 RabbitMQ 的故事 | 待开始 |
+| 3️⃣ | **Notification 通知服务** | 圆 RabbitMQ 的故事 | **✅ 已完成（2026-07-31）** |
 | 4️⃣ | **Controller 测试补漏** | 测试分层覆盖 | 待开始 |
 | 5️⃣ | **Actuator + Loki 日志聚合** | 微服务运维故事 | 待开始 |
 | 6️⃣ | **Knife4j + 种子数据 + 全链路验证** | 收尾展示 | 待开始 |
@@ -48,11 +49,17 @@
 - **前端升级**：双栏布局（历史对话列表 + 聊天区）、Markdown 渲染、快捷入口分组
 - **学完能答**："Agent 和普通 LLM 调用有什么区别？Tool Calling 怎么实现的？"
 
-### 3. Notification 通知服务 📨
-- 新建 offer-notification 微服务（端口 8085）
-- 站内信 + 邮件通知
-- 状态变更 → MQ TopicExchange → 通知消费者 → 发送通知
-- **学完能答**："MQ 在你们项目里到底解决了什么实际问题？"
+### 3. Notification 通知服务 📨 ✅ 已完成（2026-07-31）
+
+从"打日志的消费者"升级为真正的通知闭环：
+
+- **新增 offer-notification 微服务**（端口 8085）+ `offer_notification` 库 + `notification` 表
+- **跨服务事件共享**：`ApplicationEvent` 搬到公共模块 offer-api（新增公司名/岗位名字段），`MqConstants` 统一交换机/队列/路由键，消除魔法字符串
+- **消费链路**：`NotificationConsumer` 监听状态变更 → `NotificationMessageBuilder` 按状态生成文案 → 落库站内信 → `MailService` 发邮件（日志模拟，预留 SMTP 配置）
+- **4 个 REST 接口**：通知列表 / 未读数 / 单条已读 / 全部已读
+- **前端顶栏铃铛**：未读红点数字 + 下拉通知列表 + 全部已读（layout.vue）
+- **22 个新测例**：Service（8）+ 文案生成器（11）+ 消费者（3），总 77 测例全绿
+- **学完能答**："MQ 在你们项目里到底解决了什么实际问题？"——异步解耦：通知服务独立落库+发邮件，投递主流程零感知、毫秒完成；通知服务故障隔离（消息留在队列等恢复）；MQ 天然削峰
 
 ### 4. Controller 层测试 🧪
 - 每个 Controller 的 MockMVC 测试（CRUD + 异常路径 + 权限校验）

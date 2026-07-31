@@ -9,15 +9,20 @@ Client (浏览器 / Postman)
 ┌──────────────────────────────────────┐
 │   Spring Cloud Gateway (8080)        │
 │   路由转发 + JWT 鉴权 + 跨域          │
-└────┬──────┬──────┬──────┬────────────┘
-     │      │      │      │
-┌────▼──┐ ┌▼─────┐┌▼─────┐┌▼──────────┐
-│ Auth  │ │ User ││ Appl ││ AI        │
-│:8081  │ │:8082 ││:8083 ││:8084      │
-└───┬───┘ └──┬───┘└──┬──┘└─────┬─────┘
-    │        │       │         │
-    └────────┴───┬───┴─────────┘
-                 │
+└────┬──────┬──────┬──────┬────────────┬─────────────────┐
+     │      │      │      │            │
+┌────▼──┐ ┌▼─────┐┌▼─────┐┌▼──────────┐┌▼───────────────┐
+│ Auth  │ │ User ││ Appl ││ AI        ││ Notification   │
+│:8081  │ │:8082 ││:8083 ││:8084      ││:8085           │
+└───┬───┘ └──┬───┘└──┬──┘└─────┬─────┘└───────┬─────────┘
+    │        │       │         │              │
+    └────────┴───┬───┴─────────┘              │
+                 │                            │
+                 ▼                            ▼
+          ┌──────────────┐          ┌──────────────────┐
+          │ Nacos (:8848)│          │ RabbitMQ (:5672) │
+          └─────────────┘          │ 状态变更事件 Topic │
+                                   └──────────────────┘
           ┌──────▼──────┐
           │ Nacos (:8848)│
           └─────────────┘
@@ -31,7 +36,7 @@ Client (浏览器 / Postman)
 
 **分层说明：**
 - **网关层** — 统一入口，负责路由转发、JWT 校验、跨域处理
-- **微服务层** — 5 个独立服务，互相通过 Feign 调用，全部注册到 Nacos
+- **微服务层** — 6 个独立服务，互相通过 Feign 调用 + MQ 事件解耦，全部注册到 Nacos
 - **基础设施层** — Docker Compose 一键启动，与微服务分离
 
 ---
@@ -45,8 +50,9 @@ Client (浏览器 / Postman)
 | **offer-user** | 8082 | 用户管理、公司管理、岗位管理、**简历管理**、文件上传、**PDF 文本提取** | offer_user | 含内部 Feign 接口 + PdfService |
 | **offer-application** | 8083 | 投递管理、面试管理、Offer 管理、Pipeline 流水线、Dashboard 统计 | offer_application | 核心业务服务 |
 | **offer-ai** | 8084 | **AI Agent（ReAct Tool Calling）+ 对话历史持久化** | **offer_ai** | 通过 Feign 跨服务查数据 |
+| **offer-notification** | 8085 | **通知服务：MQ 消费状态变更 → 站内信 + 邮件** | **offer_notification** | 独立通知库，故障不影响主流程 |
 
-> **为什么不做成 10 个微服务？** 一个人开发，拆分过细光环境配置就消耗大半时间。公司依赖用户，岗位依赖公司，投递/面试/Offer 属于同一条业务线——5 个服务在当前规模下恰到好处。
+> **为什么不做成 10 个微服务？** 一个人开发，拆分过细光环境配置就消耗大半时间。公司依赖用户，岗位依赖公司，投递/面试/Offer 属于同一条业务线；通知服务独立是因为它消费 MQ 事件、数据完全独立、故障要隔离——6 个服务在当前规模下恰到好处。
 
 ---
 
@@ -72,11 +78,18 @@ offer-ai → offer-application     GET /internal/offers          ← Offer
 ### 异步消息（RabbitMQ）
 
 ```
-offer-application (advance) → TopicExchange → StatusChangeConsumer
+offer-application (advance) ──状态变更事件──▶ TopicExchange
+      │                                          │
+      │                               ┌──────────┴──────────┐
+      ▼                               ▼                     ▼
+  主流程照常返回             offer-notification      offer-application
+                            消费→生成文案→落库       StatusChangeConsumer
+                            →发邮件（日志模拟）         （仅日志）
 ```
 
-- 投递状态变更时发送 `ApplicationEvent` 消息
-- try-catch 兜底，MQ 宕机不影响主流程
+- 投递状态变更时发送 `ApplicationEvent`（公共模块 offer-api 定义，带公司名/岗位名）
+- **offer-notification** 独立消费：`NotificationConsumer` 生成文案 → 落库站内信 → 发邮件（MailService 日志模拟，预留 SMTP 配置）
+- try-catch 兜底，MQ 宕机不影响主流程；通知服务故障时消息留在队列，恢复后继续消费
 
 ---
 
@@ -114,6 +127,7 @@ offer-application (advance) → TopicExchange → StatusChangeConsumer
 | offer_user | user, company, position, resume | 用户信息 + 公司 + 岗位 + 简历 |
 | offer_application | application, interview, offer | 投递全流程 |
 | **offer_ai** | **conversation, conversation_message** | **AI Agent 对话历史（2026-07-30 新增）** |
+| **offer_notification** | **notification** | **站内通知（2026-07-31 新增）** |
 
 - 每个微服务独享数据库，跨库不建外键
 - 跨库查询通过 Feign 接口 + 缓存解决，不做跨库 JOIN
@@ -156,6 +170,7 @@ mvn spring-boot:run -pl offer-auth
 mvn spring-boot:run -pl offer-user
 mvn spring-boot:run -pl offer-application
 mvn spring-boot:run -pl offer-ai
+mvn spring-boot:run -pl offer-notification
 ```
 
 所有基础设施容器化，微服务本地编译运行。后续可打包为镜像统一部署。

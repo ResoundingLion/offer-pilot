@@ -83,6 +83,7 @@
         <module>offer-user</module>
         <module>offer-application</module>
         <module>offer-ai</module>
+        <module>offer-notification</module>
     </modules>
 
     <build>
